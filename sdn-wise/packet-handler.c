@@ -31,6 +31,14 @@
 #include <stdio.h>
 #include "contiki.h"
 #include "dev/watchdog.h"
+
+/* Log configuration */
+#include "log-ng.h"
+#include "log-ng-conf.h"
+#define LOG_MODULE "HANDLER"
+#define LOG_LEVEL LOG_LEVEL_SDN
+
+
 #include "packet-handler.h"
 #include "address.h"
 #include "packet-buffer.h"
@@ -100,12 +108,6 @@ const void* conf_ptr[RULE_TTL+1] =
 #else
 #define PRINTF(...)
 #endif
-
-
-/* Log configuration */
-#include "sys/log-ng.h"
-#define LOG_MODULE "PHD"
-#define LOG_LEVEL LOG_LEVEL_SDN
 
 /*----------------------------------------------------------------------------*/
   static void handle_beacon(packet_t*);

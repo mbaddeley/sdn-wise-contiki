@@ -15,7 +15,7 @@ ifneq ($(LOG_LEVEL_SDN),)
     CFLAGS += -DLOG_CONF_LEVEL_SDN=$(LOG_LEVEL_SDN)
 endif
 
-PROJECT_SOURCEFILES = flowtable.c packet-buffer.c address.c neighbor-table.c packet-handler.c node-conf.c packet-creator.c
+PROJECT_SOURCEFILES = log-ng.c flowtable.c packet-buffer.c address.c neighbor-table.c packet-handler.c node-conf.c packet-creator.c
 TARGETDIRS += ../targets
 CFLAGS += -DPROJECT_CONF_H=\"project-conf.h\"
 

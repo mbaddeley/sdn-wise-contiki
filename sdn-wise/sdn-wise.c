@@ -40,6 +40,14 @@
 #if ELF_ENABLED
 #include "loader/elfloader.h"
 #endif
+
+/* Log configuration */
+#include "log-ng.h"
+#include "log-ng-conf.h"
+#define LOG_MODULE "SDN-WISE"
+#define LOG_LEVEL LOG_LEVEL_SDN
+
+
 #include "sdn-wise.h"
 #include "flowtable.h"
 #include "packet-buffer.h"
@@ -74,11 +82,6 @@
 #else
 #define PRINTF(...)
 #endif
-
-/* Log configuration */
-#include "sys/log-ng.h"
-#define LOG_MODULE "SDN-WISE"
-#define LOG_LEVEL LOG_LEVEL_SDN
 
 /*----------------------------------------------------------------------------*/
   PROCESS(main_proc, "Main Process");

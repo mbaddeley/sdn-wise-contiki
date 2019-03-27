@@ -27,6 +27,13 @@
  * @{
  */
 #include <stdio.h>
+
+/* Log configuration */
+#include "log-ng.h"
+#include "log-ng-conf.h"
+#define LOG_MODULE "CREATOR"
+#define LOG_LEVEL LOG_LEVEL_SDN
+
 #include "packet-buffer.h"
 #include "packet-creator.h"
 #include "node-conf.h"
@@ -55,10 +62,6 @@
 #define PRINTF(...)
 #endif
 
-/* Log configuration */
-#include "sys/log-ng.h"
-#define LOG_MODULE "PHD"
-#define LOG_LEVEL LOG_LEVEL_SDN
 
 // static uint16_t pid_beacon = 0;
 // static uint16_t pid_report = 0;
