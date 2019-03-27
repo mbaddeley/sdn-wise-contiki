@@ -48,7 +48,7 @@
  *
  */
 
-#include "sys/log-ng.h"
+#include "log-ng.h"
 #include "net/ip/ip64-addr.h"
 
 int curr_log_level_sdn = LOG_CONF_LEVEL_SDN;

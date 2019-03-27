@@ -39,7 +39,8 @@
 #define DST_INDEX (LEN_INDEX + 1)
 #define SRC_INDEX (DST_INDEX + ADDRESS_LENGTH)
 #define TYP_INDEX (SRC_INDEX + ADDRESS_LENGTH)
-#define TTL_INDEX (TYP_INDEX + 1)
+#define PID_INDEX (TYP_INDEX + 1)
+#define TTL_INDEX (PID_INDEX + 1)
 #define NXH_INDEX (TTL_INDEX + 1)
 #define PLD_INDEX (NXH_INDEX + ADDRESS_LENGTH)
 // #define PID_INDEX (NXH_INDEX + ADDRESS_LENGTH)
@@ -69,9 +70,9 @@
     address_t dst;
     address_t src;
     packet_type_t typ;
+    uint8_t pid;
     uint8_t ttl;
     address_t nxh;
-    // uint8_t pid;
   } header_t;
 
   typedef struct __attribute__((__packed__)) packet_struct {
@@ -87,11 +88,11 @@
   void set_payload_at(packet_t*, uint8_t, uint8_t);
   void restore_ttl(packet_t*);
 
-  packet_t* create_packet(uint8_t, address_t*, address_t*, packet_type_t,
-    address_t*);
+  packet_t* create_packet(uint8_t net, address_t* dst, address_t* src, packet_type_t typ,
+    uint8_t pid, address_t* nxh);
   packet_t* create_packet_empty(void);
-  packet_t* create_packet_payload(uint8_t, address_t*, address_t*, packet_type_t,
-    address_t*, uint8_t*, uint8_t);
+  packet_t* create_packet_payload(uint8_t net, address_t* dst, address_t* src, packet_type_t typ,
+    uint8_t pid, address_t* nxh, uint8_t* paylod, uint8_t len);
   void packet_deallocate(packet_t*);
 
   void packet_buffer_init(void);

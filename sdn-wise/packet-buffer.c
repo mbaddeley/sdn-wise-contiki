@@ -71,12 +71,12 @@
   print_packet(packet_t* p)
   {
     uint16_t i = 0;
-    printf("%s s:%u d:%u h:%u l:%u [",
+    printf("%s s:%u d:%u h:%u id:%u l:%u [",
       SDN_CODE_STRING(p->header.typ),
       p->header.src.u8[1],
       p->header.dst.u8[1],
       conf.hops_from_sink,
-      // p->header.pid,
+      p->header.pid,
       p->header.len);
     for (i=0; i < (p->header.len - PLD_INDEX); ++i){
       printf("%d ",get_payload_at(p,i));
@@ -106,9 +106,9 @@
 /*----------------------------------------------------------------------------*/
   packet_t*
   create_packet_payload(uint8_t net, address_t* dst, address_t* src,
-    packet_type_t typ, address_t* nxh, /* uint8_t pid,*/ uint8_t* payload, uint8_t len)
+    packet_type_t typ, uint8_t pid, address_t* nxh, uint8_t* payload, uint8_t len)
   {
-    packet_t* p = create_packet(net, dst, src, typ, nxh);
+    packet_t* p = create_packet(net, dst, src, typ, pid, nxh);
     if (p != NULL){
       uint8_t i;
 
@@ -172,7 +172,7 @@
 /*----------------------------------------------------------------------------*/
   packet_t*
   create_packet(uint8_t net, address_t* dst, address_t* src, packet_type_t typ,
-    address_t* nxh/*, uint8_t pid*/)
+    uint8_t pid, address_t* nxh)
   {
     packet_t* p = packet_allocate();
     if (p != NULL){
@@ -183,7 +183,7 @@
       p->header.src=*src;
       p->header.typ=typ;
       p->header.nxh=*nxh;
-      // p->header.pid=pid;
+      p->header.pid=pid;
       restore_ttl(p);
     }
     return p;
