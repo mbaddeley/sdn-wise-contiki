@@ -37,7 +37,7 @@
 #include "packet-creator.h"
 
 #ifndef SDN_WISE_DEBUG
-#define SDN_WISE_DEBUG 0
+#define SDN_WISE_DEBUG 1
 #endif
 #if SDN_WISE_DEBUG
 #include <stdio.h>
@@ -53,25 +53,25 @@
   static void neighbor_free(neighbor_t *);
   static void print_neighbor(neighbor_t*);
 /*----------------------------------------------------------------------------*/
-  static void 
+  static void
   print_neighbor(neighbor_t* n)
   {
     print_address(&(n->address));
     PRINTF("%d",n->rssi);
   }
 /*----------------------------------------------------------------------------*/
-  void 
+  void
   print_neighbor_table(void)
   {
     neighbor_t *n;
     for(n = list_head(neighbor_table); n != NULL; n = n->next) {
       PRINTF("[NGT]: ");
       print_neighbor(n);
-      PRINTF("\n");  
+      PRINTF("\n");
     }
   }
 /*----------------------------------------------------------------------------*/
-  void 
+  void
   purge_neighbor_table(void)
   {
     neighbor_t *n;
@@ -99,7 +99,7 @@
   neighbor_free(neighbor_t* n)
   {
     list_remove(neighbor_table, n);
-    int res = memb_free(&neighbors_memb, n); 
+    int res = memb_free(&neighbors_memb, n);
     if (res !=0){
       PRINTF("[NGT]: Failed to free a neighbor. Reference count: %d\n",res);
     }
@@ -118,7 +118,7 @@
     for(tmp = list_head(neighbor_table); tmp != NULL; tmp = tmp->next) {
       if(address_cmp(&(tmp->address),a)){
         return tmp;
-      }  
+      }
     }
     return NULL;
   }
@@ -127,17 +127,17 @@
   add_neighbor(address_t* address, uint8_t rssi)
   {
     neighbor_t* res = neighbor_table_contains(address);
-    if (res == NULL){ 
+    if (res == NULL){
       neighbor_t* n = neighbor_allocate();
       if (n != NULL){
         memset(n, 0, sizeof(*n));
         n->address = *address;
         n->rssi = rssi;
         list_add(neighbor_table,n);
-      } 
+      }
     } else {
       res->rssi = rssi;
-    }  
+    }
   }
 /*----------------------------------------------------------------------------*/
   void
@@ -147,9 +147,9 @@
     set_payload_at(p,i,(uint8_t)(list_length(neighbor_table) & 0xFF));
     i++;
     neighbor_t *n;
-    for(n = list_head(neighbor_table); n != NULL; n = n->next) { 
+    for(n = list_head(neighbor_table); n != NULL; n = n->next) {
       uint8_t j = 0;
-      for (j = 0; j < ADDRESS_LENGTH; ++j){ 
+      for (j = 0; j < ADDRESS_LENGTH; ++j){
         set_payload_at(p,i,n->address.u8[j]);
         ++i;
       }
@@ -159,14 +159,14 @@
     purge_neighbor_table();
   }
 /*----------------------------------------------------------------------------*/
-  void 
+  void
   neighbor_table_init(void)
   {
     list_init(neighbor_table);
     memb_init(&neighbors_memb);
   }
 /*----------------------------------------------------------------------------*/
-  void 
+  void
   test_neighbor_table(void)
   {
     address_t addr1;

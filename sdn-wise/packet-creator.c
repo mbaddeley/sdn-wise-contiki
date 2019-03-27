@@ -54,21 +54,36 @@
 #else
 #define PRINTF(...)
 #endif
+
+/* Log configuration */
+#include "sys/log-ng.h"
+#define LOG_MODULE "PHD"
+#define LOG_LEVEL LOG_LEVEL_SDN
+
+// static uint16_t pid_beacon = 0;
+// static uint16_t pid_report = 0;
+// static uint16_t pid_reg_proxy = 0;
+// static uint16_t pid_request = 0;
+// #if !SINK
+// #endif
+// static uint16_t pid_config = 0;
+
 /*----------------------------------------------------------------------------*/
-packet_t* 
+packet_t*
 create_beacon(void)
 {
   packet_t* p = create_packet_empty();
   if (p != NULL){
     p->header.net = conf.my_net;
     set_broadcast_address(&(p->header.dst));
-    p->header.src = conf.my_address; 
+    p->header.src = conf.my_address;
     p->header.typ = BEACON;
     p->header.nxh = conf.sink_address;
-  
+    // p->header.pid = ++pid_beacon;
+
     set_payload_at(p, BEACON_HOPS_INDEX, conf.hops_from_sink);
 
-#if BATTERY_ENABLED           
+#if BATTERY_ENABLED
     SENSORS_ACTIVATE(battery_sensor);
     set_payload_at(p, BEACON_BATT_INDEX, battery_sensor.value(0));
     SENSORS_DEACTIVATE(battery_sensor);
@@ -79,61 +94,38 @@ create_beacon(void)
   return p;
 }
 /*----------------------------------------------------------------------------*/
-packet_t* 
+packet_t*
 create_data(uint8_t count)
 {
-#ifdef X_NUCLEO_IKS01A1  
-    int i = 0; 
-    uint8_t sensor_values[sizeof(int)*NO_OF_SENSORS];
-    int* sensor_values_ptr = &sensor_values;
-    SENSORS_ACTIVATE(temperature_sensor);
-    SENSORS_ACTIVATE(humidity_sensor);
-    SENSORS_ACTIVATE(pressure_sensor);
-
-    sensor_values_ptr[1] = temperature_sensor.value(0);
-    sensor_values_ptr[2] = humidity_sensor.value(0);
-    sensor_values_ptr[3] = pressure_sensor.value(0);
-
-    SENSORS_DEACTIVATE(temperature_sensor);
-    SENSORS_DEACTIVATE(humidity_sensor);
-    SENSORS_DEACTIVATE(pressure_sensor);
-#endif
-
   packet_t* p = NULL;
-#if !SINK
   p = create_packet_empty();
     if (p != NULL){
       p->header.net = conf.my_net;
-      p->header.dst = get_address_from_int(5); // Replace 5 with your dst
+      p->header.dst = get_address_from_int(1); // Replace 5 with your dst
       p->header.src = conf.my_address;
       p->header.typ = DATA;
       p->header.nxh = conf.nxh_vs_sink;
-#ifdef X_NUCLEO_IKS01A1 
-      for (i = 0; i < sizeof(int)*NO_OF_SENSORS; i++){
-        set_payload_at(p, i, sensor_values[i]);
-      }
-#else
+      // p->header.pid = ++pid_data;
       set_payload_at(p, 0, count);
-#endif
     }
-#endif
   return p;
 }
 /*----------------------------------------------------------------------------*/
-packet_t* 
+packet_t*
 create_report(void)
-{  
+{
   packet_t* p = create_packet_empty();
   if (p != NULL){
     p->header.net = conf.my_net;
     p->header.dst = conf.sink_address;
-    p->header.src = conf.my_address; 
+    p->header.src = conf.my_address;
     p->header.typ = REPORT;
     p->header.nxh = conf.nxh_vs_sink;
-    
+    // p->header.pid = ++pid_report;
+
     set_payload_at(p, BEACON_HOPS_INDEX, conf.hops_from_sink);
-                
-#if BATTERY_ENABLED          
+
+#if BATTERY_ENABLED
     SENSORS_ACTIVATE(battery_sensor);
     set_payload_at(p, BEACON_BATT_INDEX, battery_sensor.value(0));
     SENSORS_DEACTIVATE(battery_sensor);
@@ -145,24 +137,25 @@ create_report(void)
   }
   return p;
 }
+
 /*----------------------------------------------------------------------------*/
-packet_t* 
+packet_t*
 create_reg_proxy(void)
-{  
+{
   uint8_t payload[] = {
     48, 48, 48, 48, 48, 48, 48, 49,
      0,  1,  2,  3,  4,  5,  0,  0,
      0,  0,  0,  0,  0,  1,-64,-88,
      1, 108, 39, 6
-  }; 
+  };
 
   packet_t* p = create_packet_payload(
-    conf.my_net, 
-    &conf.sink_address, 
-    &conf.my_address, 
-    REG_PROXY, 
+    conf.my_net,
+    &conf.sink_address,
+    &conf.my_address,
+    REG_PROXY,
     &conf.nxh_vs_sink,
-    payload, 
+    payload,
     28);
   return p;
 }
@@ -170,22 +163,23 @@ create_reg_proxy(void)
 void
 create_and_send_request(packet_t* p)
 {
-  
-  uint8_t i = 0;    
-    
-  if (p->header.len < MAX_PAYLOAD_LENGTH){  
+
+  uint8_t i = 0;
+
+  if (p->header.len < MAX_PAYLOAD_LENGTH){
     packet_t* r = create_packet_empty();
     if (r != NULL){
       r->header.net = conf.my_net;
       r->header.dst = conf.sink_address;
-      r->header.src = conf.my_address; 
+      r->header.src = conf.my_address;
       r->header.typ = REQUEST;
       r->header.nxh = conf.nxh_vs_sink;
+      // r->header.pid = conf.requests_count;
 
       uint8_t* a = (uint8_t*)p;
       set_payload_at(r, 0, conf.requests_count);
       set_payload_at(r, 1, 0);
-      set_payload_at(r, 2, 1);     
+      set_payload_at(r, 2, 1);
       for (i = 0; i < (p->header.len); ++i){
         set_payload_at(r, i+3, a[i]);
       }
@@ -193,22 +187,24 @@ create_and_send_request(packet_t* p)
     conf.requests_count++;
 
     }
-  } else {   
+  } else {
     packet_t* r1 = create_packet_empty();
     packet_t* r2 = create_packet_empty();
-    
+
     if (r1 != NULL && r2 != NULL){
       r1->header.net = conf.my_net;
       r1->header.dst = conf.sink_address;
-      r1->header.src = conf.my_address; 
+      r1->header.src = conf.my_address;
       r1->header.typ = REQUEST;
       r1->header.nxh = conf.nxh_vs_sink;
-      
+      // r1->header.pid = conf.requests_count;
+
       r2->header.net = conf.my_net;
       r2->header.dst = conf.sink_address;
-      r2->header.src = conf.my_address; 
+      r2->header.src = conf.my_address;
       r2->header.typ = REQUEST;
       r2->header.nxh = conf.nxh_vs_sink;
+      // r2->header.pid = conf.requests_count;
 
       set_payload_at(r1, 0, conf.requests_count);
       set_payload_at(r1, 1, 0);
@@ -216,9 +212,9 @@ create_and_send_request(packet_t* p)
 
       set_payload_at(r2, 0, conf.requests_count);
       set_payload_at(r2, 1, 1);
-      set_payload_at(r2, 2, 2);     
-      
-      uint8_t* a = (uint8_t*)p;     
+      set_payload_at(r2, 2, 2);
+
+      uint8_t* a = (uint8_t*)p;
       for (i = 0; i < MAX_PAYLOAD_LENGTH; ++i){
         set_payload_at(r1, i+3, a[i]);
       }
@@ -239,13 +235,13 @@ create_and_send_request(packet_t* p)
       }
     }
   }
-  packet_deallocate(p); 
+  packet_deallocate(p);
 }
 /*----------------------------------------------------------------------------*/
-packet_t* 
+packet_t*
 create_config(void)
 {
-  // TODO 
+  // TODO
   return NULL;
 }
 /*----------------------------------------------------------------------------*/

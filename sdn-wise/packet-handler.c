@@ -40,6 +40,8 @@
 #include "node-conf.h"
 #include "sdn-wise.h"
 
+#include "sys/node-id.h"
+
 typedef enum conf_id{
   RESET,
   MY_NET,
@@ -51,7 +53,7 @@ typedef enum conf_id{
   RESET_PERIOD,
   RULE_TTL,
   ADD_ALIAS,
-  REM_ALIAS,  
+  REM_ALIAS,
   GET_ALIAS,
   ADD_RULE,
   REM_RULE,
@@ -61,30 +63,30 @@ typedef enum conf_id{
   GET_FUNCTION
 } conf_id_t;
 
-const uint8_t conf_size[RULE_TTL+1] = 
+const uint8_t conf_size[RULE_TTL+1] =
 {
   0,
-  sizeof(conf.my_net),              
-  sizeof(conf.my_address),          
+  sizeof(conf.my_net),
+  sizeof(conf.my_address),
   sizeof(conf.packet_ttl),
   sizeof(conf.rssi_min),
-  sizeof(conf.beacon_period),       
-  sizeof(conf.report_period),  
-  sizeof(conf.reset_period),       
+  sizeof(conf.beacon_period),
+  sizeof(conf.report_period),
+  sizeof(conf.reset_period),
   sizeof(conf.rule_ttl)
 };
 
-const void* conf_ptr[RULE_TTL+1] = 
+const void* conf_ptr[RULE_TTL+1] =
 {
   NULL,
-  &conf.my_net,              
-  &conf.my_address,          
+  &conf.my_net,
+  &conf.my_address,
   &conf.packet_ttl,
   &conf.rssi_min,
-  &conf.beacon_period,       
-  &conf.report_period, 
-  &conf.reset_period,      
-  &conf.rule_ttl,              
+  &conf.beacon_period,
+  &conf.report_period,
+  &conf.reset_period,
+  &conf.rule_ttl,
 };
 
 #define CNF_READ 0
@@ -98,6 +100,13 @@ const void* conf_ptr[RULE_TTL+1] =
 #else
 #define PRINTF(...)
 #endif
+
+
+/* Log configuration */
+#include "sys/log-ng.h"
+#define LOG_MODULE "PHD"
+#define LOG_LEVEL LOG_LEVEL_SDN
+
 /*----------------------------------------------------------------------------*/
   static void handle_beacon(packet_t*);
   static void handle_data(packet_t*);
@@ -105,41 +114,68 @@ const void* conf_ptr[RULE_TTL+1] =
   static void handle_response(packet_t*);
   static void handle_open_path(packet_t*);
   static void handle_config(packet_t*);
+
 /*----------------------------------------------------------------------------*/
-  void 
+// static uint16_t pid_open_path = 0;
+  void
   handle_packet(packet_t* p)
   {
     if (p->info.rssi >= conf.rssi_min && p->header.net == conf.my_net){
       if (p->header.typ == BEACON){
-        PRINTF("[PHD]: Beacon\n");
+        // LOG_STAT("IN %s s:%u d:%u\n",
+        //   SDN_CODE_STRING(p->header.typ),
+        //   p->header.src.u8[1],
+        //   p->header.dst.u8[1]
+        // );
+        // PRINTF("[PHD]: Beacon\n");
         handle_beacon(p);
       } else {
         if (is_my_address(&(p->header.nxh))){
+          // if(is_my_address(&(p->header.src))){
+          //   switch(p->header.typ) {
+          //     case OPEN_PATH:
+          //       p->header.pid = ++pid_open_path;
+          //       break;
+          //     default:
+          //       break;
+          //   }
+          // }
+          if(is_my_address(&(p->header.dst))) {
+            LOG_STAT("IN  ");
+#if LOG_LEVEL <= (LOG_LEVEL_STAT)
+            print_packet(p);
+#endif
+          }
           switch (p->header.typ){
             case DATA:
-            PRINTF("[PHD]: Data\n");
-            handle_data(p);
-            break;
+              // PRINTF("[PHD]: Data\n");
+              handle_data(p);
+              break;
 
             case RESPONSE:
-            PRINTF("[PHD]: Response\n");
-            handle_response(p);
-            break;
+              // PRINTF("[PHD]: Response\n");
+              handle_response(p);
+              break;
 
             case OPEN_PATH:
-            PRINTF("[PHD]: Open Path\n");
-            handle_open_path(p);
-            break;
+              // PRINTF("[PHD]: Open Path\n");
+              handle_open_path(p);
+              break;
 
             case CONFIG:
-            PRINTF("[PHD]: Config\n");
-            handle_config(p);
-            break;
+              // PRINTF("[PHD]: Config\n");
+              handle_config(p);
+              break;
+
+            case REQUEST:
+              // PRINTF("[PHD]: Request\n");
+              handle_report(p);
+              break;
 
             default:
-            PRINTF("[PHD]: Request/Report\n");
-            handle_report(p);
-            break;
+              // PRINTF("[PHD]: Report\n");
+              handle_report(p);
+              break;
           }
         }
       }
@@ -177,7 +213,7 @@ const void* conf_ptr[RULE_TTL+1] =
   handle_data(packet_t* p)
   {
     if (is_my_address(&(p->header.dst)))
-    {     
+    {
       PRINTF("[PHD]: Consuming Packet...\n");
       packet_deallocate(p);
     } else {
@@ -189,19 +225,19 @@ const void* conf_ptr[RULE_TTL+1] =
   handle_report(packet_t* p)
   {
 #if SINK
-    print_packet_uart(p);
-#else 
-    
+    send_to_uart(p);
+#else
+
     p->header.nxh = conf.nxh_vs_sink;
     rf_unicast_send(p);
-#endif  
+#endif
   }
 /*----------------------------------------------------------------------------*/
   void
   handle_response(packet_t* p)
   {
     if (is_my_address(&(p->header.dst)))
-    {    
+    {
       entry_t* e = get_entry_from_array(p->payload, p->header.len - PLD_INDEX);
       if (e != NULL)
       {
@@ -210,7 +246,7 @@ const void* conf_ptr[RULE_TTL+1] =
       packet_deallocate(p);
     } else {
       match_packet(p);
-    } 
+    }
   }
 /*----------------------------------------------------------------------------*/
   void
@@ -223,7 +259,7 @@ const void* conf_ptr[RULE_TTL+1] =
     int my_index = -1;
     uint8_t my_position = 0;
     uint8_t end = p->header.len - PLD_INDEX;
-    
+
     for (i = start; i < end; i += ADDRESS_LENGTH)
     {
       address_t tmp = get_address_from_array(&(p->payload[i]));
@@ -240,11 +276,11 @@ const void* conf_ptr[RULE_TTL+1] =
 	match_packet(p);
     } else {
     if (my_position > 0)
-    { 
+    {
       uint8_t prev = my_index - ADDRESS_LENGTH;
       uint8_t first = start;
       entry_t* e = create_entry();
-      
+
       window_t* w = create_window();
       w->operation = EQUAL;
       w->size = SIZE_2;
@@ -254,19 +290,19 @@ const void* conf_ptr[RULE_TTL+1] =
       w->rhs_location = CONST;
 
       add_window(e,w);
-      
+
       for (i = 0; i<n_windows; ++i)
       {
         add_window(e, get_window_from_array(&(p->payload[i*WINDOW_SIZE + 1])));
       }
 
-      action_t* a = create_action(FORWARD_U, &(p->payload[prev]), ADDRESS_LENGTH); 
+      action_t* a = create_action(FORWARD_U, &(p->payload[prev]), ADDRESS_LENGTH);
       add_action(e,a);
       add_entry(e);
     }
-   
+
     if (my_position < path_len-1)
-    { 
+    {
       uint8_t next = my_index + ADDRESS_LENGTH;
       uint8_t last = end - ADDRESS_LENGTH;
       entry_t* e = create_entry();
@@ -280,7 +316,7 @@ const void* conf_ptr[RULE_TTL+1] =
       w->rhs_location = CONST;
 
       add_window(e,w);
-      
+
       for (i = 0; i<n_windows; ++i)
       {
         add_window(e, get_window_from_array(&(p->payload[i*WINDOW_SIZE + 1])));
@@ -306,10 +342,10 @@ const void* conf_ptr[RULE_TTL+1] =
   handle_config(packet_t* p)
   {
     if (is_my_address(&(p->header.dst)))
-    {    
+    {
 #if SINK
       if (!is_my_address(&(p->header.src))){
-        print_packet_uart(p);
+        send_to_uart(p);
       } else {
 #endif
       uint8_t i = 0;
@@ -342,7 +378,7 @@ const void* conf_ptr[RULE_TTL+1] =
           } else if (conf_size[id] == 2) {
             uint16_t value = *((uint16_t*)conf_ptr[id]);
             p->payload[i+1] = value >> 8;
-            p->payload[i+2] = value & 0xFF; 
+            p->payload[i+2] = value & 0xFF;
           }
 	  p->header.len += conf_size[id];
           break;
@@ -351,11 +387,11 @@ const void* conf_ptr[RULE_TTL+1] =
           default:
           break;
         }
-        swap_addresses(&(p->header.src),&(p->header.dst));      
+        swap_addresses(&(p->header.src),&(p->header.dst));
 #if !SINK
         match_packet(p);
 #else
-	print_packet_uart(p);
+	send_to_uart(p);
 #endif
       } else {
         //WRITE
@@ -386,7 +422,7 @@ const void* conf_ptr[RULE_TTL+1] =
             memcpy((uint8_t*)conf_ptr[id], &(p->payload[i+1]), conf_size[id]);
           } else if (conf_size[id] == 2) {
             uint16_t h = p->payload[i+1] << 8;
-            uint16_t l = p->payload[i+2];            
+            uint16_t l = p->payload[i+2];
             *((uint16_t*)conf_ptr[id]) = h + l;
           }
           break;
@@ -398,14 +434,14 @@ const void* conf_ptr[RULE_TTL+1] =
       }
 #if SINK
     }
-#endif      
+#endif
     }
     else {
       match_packet(p);
-    }   
+    }
   }
 /*----------------------------------------------------------------------------*/
-  void 
+  void
   test_handle_open_path(void)
   {
     uint8_t array[19] = {

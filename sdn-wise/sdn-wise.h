@@ -36,6 +36,17 @@
 #include "lib/memb.h"
 #include "packet-buffer.h"
 
+#define SDN_CODE_STRING(code) \
+  ((code == DATA) ? ("DATA") : \
+  (code == BEACON) ? ("BEACON") : \
+  (code == REPORT) ? ("REPORT") : \
+  (code == REQUEST) ? ("REQUEST") : \
+  (code == RESPONSE) ? ("RESPONSE") : \
+  (code == OPEN_PATH) ? ("OPEN_PATH") : \
+  (code == CONFIG) ? ("CONFIG") : \
+  (code == REG_PROXY) ? ("REG_PROXY") : "UNKNOWN")
+
+
 void rf_unicast_send(packet_t*);
 void rf_broadcast_send(packet_t*);
 

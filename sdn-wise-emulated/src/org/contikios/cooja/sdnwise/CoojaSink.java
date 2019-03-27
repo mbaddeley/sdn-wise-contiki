@@ -118,7 +118,7 @@ public class CoojaSink extends AbstractCoojaMote {
         String s = (String) JOptionPane.showInputDialog(null,
                 "Please insert the IP address and TCP port of the controller:",
                 "SDN-WISE Sink",
-                JOptionPane.QUESTION_MESSAGE, null, null, "192.168.1.101:9999");
+                JOptionPane.QUESTION_MESSAGE, null, null, "localhost:9974");
 
         String[] tmp = s.split(":");
 

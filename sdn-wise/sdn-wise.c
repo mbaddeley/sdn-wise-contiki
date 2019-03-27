@@ -29,10 +29,10 @@
 
 #include "contiki.h"
 #include "net/rime/rime.h"
-#include "net/linkaddr.h"  
+#include "net/linkaddr.h"
 #include "dev/watchdog.h"
 #include "dev/uart1.h"
-#include "dev/leds.h"  
+#include "dev/leds.h"
 #include "lib/list.h"
 #if CFS_ENABLED
 #include "cfs/cfs.h"
@@ -75,6 +75,11 @@
 #define PRINTF(...)
 #endif
 
+/* Log configuration */
+#include "sys/log-ng.h"
+#define LOG_MODULE "SDN-WISE"
+#define LOG_LEVEL LOG_LEVEL_SDN
+
 /*----------------------------------------------------------------------------*/
   PROCESS(main_proc, "Main Process");
   PROCESS(rf_u_send_proc, "RF Unicast Send Process");
@@ -98,20 +103,36 @@
   static uint8_t uart_buffer[UART_BUFFER_SIZE];
   static uint8_t uart_buffer_index = 0;
   static uint8_t uart_buffer_expected = 0;
-#if MOBILE
+#if !SINK
   static uint8_t count=0;
   static packet_t* p;
 #endif
 /*----------------------------------------------------------------------------*/
+// static uint16_t pid_data = 0;
   void
   rf_unicast_send(packet_t* p)
   {
+    if(is_my_address(&(p->header.src))) {
+      // if(p->header.typ == DATA) {
+      //   p->header.pid = ++pid_data;
+      // }
+      LOG_STAT("OUT ");
+#if LOG_LEVEL <= (LOG_LEVEL_STAT)
+      print_packet(p);
+#endif
+    }
     process_post(&rf_u_send_proc, RF_U_SEND_EVENT, (process_data_t)p);
   }
 /*----------------------------------------------------------------------------*/
   void
   rf_broadcast_send(packet_t* p)
   {
+    // LOG_STAT("OUT %s s:%u d:%u l:%u\n",
+    //   SDN_CODE_STRING(p->header.typ),
+    //   p->header.src.u8[1],
+    //   p->header.dst.u8[1],
+    //   p->header.len
+    // );
     process_post(&rf_b_send_proc, RF_B_SEND_EVENT, (process_data_t)p);
   }
 
@@ -163,7 +184,7 @@
       packet_t* p = get_packet_from_array(uart_buffer);
       if (p != NULL){
         p->info.rssi = 0;
-        process_post(&main_proc, UART_RECEIVE_EVENT, (process_data_t)p);  
+        process_post(&main_proc, UART_RECEIVE_EVENT, (process_data_t)p);
       }
     }
     return 0;
@@ -180,7 +201,7 @@
 /*----------------------------------------------------------------------------*/
   PROCESS_THREAD(main_proc, ev, data) {
     PROCESS_BEGIN();
-    
+
     uart1_init(BAUD2UBR(115200));       /* set the baud rate as necessary */
     uart1_set_input(uart_rx_callback);  /* set the callback function */
 
@@ -192,8 +213,8 @@
     leds_init();
 
 #if SINK
-    print_packet_uart(create_reg_proxy());
-#endif    
+    send_to_uart(create_reg_proxy());
+#endif
 
     while(1) {
       PROCESS_WAIT_EVENT();
@@ -204,8 +225,8 @@
       // test_neighbor_table();
       // test_packet_buffer();
       // test_address_list();
-        print_flowtable();
-        print_node_conf();
+        // print_flowtable();
+        // print_node_conf();
         break;
 
         case UART_RECEIVE_EVENT:
@@ -241,17 +262,19 @@
         break;
 
         case RF_SEND_DATA_EVENT:
-            #if MOBILE
-            if (conf.is_active){
-            p = create_data(count);
-                if (p != NULL){
-                    match_packet(p);
-                }
-            count++;
-               }
-       #endif
+// #if MOBILE
+#if !SINK
+        if (conf.is_active){
+          p = create_data(count);
+          if (p != NULL){
+              match_packet(p);
+          }
+          count++;
+        }
+// #endif
+#endif
         break;
-      } 
+      }
     }
     PROCESS_END();
   }
@@ -270,8 +293,9 @@
         p->header.ttl--;
 
         PRINTF("[TXU]: ");
+#if SDN_WISE_DEBUG
         print_packet(p);
-        PRINTF("\n");
+#endif
 
         if (!is_my_address(&(p->header.dst))){
           int i = 0;
@@ -297,7 +321,7 @@
         }
 #if SINK
         else {
-          print_packet_uart(p);
+          send_to_uart(p);
         }
 #endif
         packet_deallocate(p);
@@ -318,9 +342,10 @@
       if (p != NULL){
         p->header.ttl--;
         PRINTF("[TXB]: ");
+#if SDN_WISE_DEBUG
         print_packet(p);
-        PRINTF("\n");
-        
+#endif
+
         uint8_t* a = (uint8_t*)p;
         packetbuf_copyfrom(a,p->header.len);
         broadcast_send(&bc);
@@ -361,7 +386,7 @@ PROCESS_THREAD(beacon_timer_proc, ev, data) {
 /*----------------------------------------------------------------------------*/
   PROCESS_THREAD(report_timer_proc, ev, data) {
     static struct etimer et;
-    
+
     PROCESS_BEGIN();
     while(1){
 #if !SINK
@@ -395,8 +420,9 @@ PROCESS_THREAD(beacon_timer_proc, ev, data) {
       PROCESS_WAIT_EVENT_UNTIL(ev == NEW_PACKET_EVENT);
       packet_t* p = (packet_t*)data;
       PRINTF("[RX ]: ");
+#if SDN_WISE_DEBUG
       print_packet(p);
-      PRINTF("\n");
+#endif
       handle_packet(p);
     }
     PROCESS_END();
