@@ -42,6 +42,7 @@
 #endif
 
 /* Log configuration */
+#include <stdio.h>
 #include "log-ng.h"
 #include "log-ng-conf.h"
 #define LOG_MODULE "SDN-WISE"
@@ -111,14 +112,18 @@
   static packet_t* p;
 #endif
 /*----------------------------------------------------------------------------*/
-// static uint16_t pid_data = 0;
+static uint16_t pid_data = 0;
   void
   rf_unicast_send(packet_t* p)
   {
     if(is_my_address(&(p->header.src))) {
-      // if(p->header.typ == DATA) {
-      //   p->header.pid = ++pid_data;
-      // }
+      switch(p->header.typ) {
+        case DATA:
+          p->header.pid = ++pid_data;
+          break;
+        default:
+          break;
+      }
       LOG_STAT("OUT ");
 #if LOG_LEVEL <= (LOG_LEVEL_STAT)
       print_packet(p);
@@ -209,10 +214,16 @@
     uart1_set_input(uart_rx_callback);  /* set the callback function */
 
     node_conf_init();
+    print_node_conf();
+
     flowtable_init();
+
     packet_buffer_init();
+
     neighbor_table_init();
+
     address_list_init();
+
     leds_init();
 
 #if SINK

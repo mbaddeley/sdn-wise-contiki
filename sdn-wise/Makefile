@@ -9,6 +9,14 @@ ifneq ($(SDN_WISE_DEBUG),)
     CFLAGS += -DSDN_WISE_DEBUG=$(SDN_WISE_DEBUG)
 endif
 
+# SDN Configuration
+ifneq ($(NSUFREQ),)
+    CFLAGS += -DSDN_CONF_CONTROLLER_UPDATE_PERIOD=$(NSUFREQ)
+endif
+ifneq ($(FTLIFETIME),)
+    CFLAGS += -DSDN_CONF_FT_LIFETIME=$(FTLIFETIME)
+endif
+
 # Logging levels
 LOG_LEVEL_SDN ?= LOG_LEVEL_STAT
 ifneq ($(LOG_LEVEL_SDN),)

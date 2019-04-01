@@ -70,18 +70,28 @@
   void
   print_packet(packet_t* p)
   {
-    uint16_t i = 0;
-    printf("%s s:%u d:%u h:%u id:%u l:%u [",
-      SDN_CODE_STRING(p->header.typ),
+    // uint16_t i = 0;
+    printf("%s ",  SDN_CODE_STRING(p->header.typ));
+    switch(p->header.typ) {
+      case REQUEST:
+      printf("f:%u t:%u ", p->payload[8], p->payload[6]);
+      break;
+      case OPEN_PATH:
+      printf("f:%u t:%u ", p->payload[p->header.len - (PLD_INDEX + 1)], p->payload[2]);
+      break;
+      default:
+      break;
+    }
+    printf("s:%u d:%u h:%u id:%u\n",
       p->header.src.u8[1],
       p->header.dst.u8[1],
       conf.hops_from_sink,
-      p->header.pid,
-      p->header.len);
-    for (i=0; i < (p->header.len - PLD_INDEX); ++i){
-      printf("%d ",get_payload_at(p,i));
-    }
-    printf("]\n");
+      p->header.pid);
+      // p->header.len);
+    // for (i=0; i < (p->header.len - PLD_INDEX); ++i){
+    //   printf("%d ",get_payload_at(p,i));
+    // }
+    // printf("]\n");
   }
 /*----------------------------------------------------------------------------*/
   static packet_t *

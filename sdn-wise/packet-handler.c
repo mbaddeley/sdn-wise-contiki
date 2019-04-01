@@ -118,32 +118,26 @@ const void* conf_ptr[RULE_TTL+1] =
   static void handle_config(packet_t*);
 
 /*----------------------------------------------------------------------------*/
-// static uint16_t pid_open_path = 0;
+static uint16_t pid_open_path = 0;
   void
   handle_packet(packet_t* p)
   {
     if (p->info.rssi >= conf.rssi_min && p->header.net == conf.my_net){
       if (p->header.typ == BEACON){
-        // LOG_STAT("IN %s s:%u d:%u\n",
-        //   SDN_CODE_STRING(p->header.typ),
-        //   p->header.src.u8[1],
-        //   p->header.dst.u8[1]
-        // );
-        // PRINTF("[PHD]: Beacon\n");
         handle_beacon(p);
       } else {
         if (is_my_address(&(p->header.nxh))){
-          // if(is_my_address(&(p->header.src))){
-          //   switch(p->header.typ) {
-          //     case OPEN_PATH:
-          //       p->header.pid = ++pid_open_path;
-          //       break;
-          //     default:
-          //       break;
-          //   }
-          // }
           if(is_my_address(&(p->header.dst))) {
             LOG_STAT("IN  ");
+            if(is_my_address(&(p->header.src))){
+              switch(p->header.typ) {
+                case OPEN_PATH:
+                  p->header.pid = ++pid_open_path;
+                  break;
+                default:
+                  break;
+              }
+            }
 #if LOG_LEVEL <= (LOG_LEVEL_STAT)
             print_packet(p);
 #endif

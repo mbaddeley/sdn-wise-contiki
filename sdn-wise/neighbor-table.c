@@ -56,7 +56,9 @@
   static void
   print_neighbor(neighbor_t* n)
   {
+#if SDN_WISE_DEBUG
     print_address(&(n->address));
+#endif
     PRINTF("%d",n->rssi);
   }
 /*----------------------------------------------------------------------------*/

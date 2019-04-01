@@ -57,31 +57,31 @@
     *a = *b;
     *b = tmp;
   }
-/*----------------------------------------------------------------------------*/  
-  uint8_t 
+/*----------------------------------------------------------------------------*/
+  uint8_t
   is_my_address(address_t* a)
   {
     return (address_cmp(&(conf.my_address), a) || address_list_contains(a));
   }
 /*----------------------------------------------------------------------------*/
-  void 
+  void
   print_address(address_t* a)
   {
     uint16_t i = 0;
     for (i=0;i<ADDRESS_LENGTH-1;++i){
-      PRINTF("%d.",a->u8[i]);
+      printf("%d.",a->u8[i]);
     }
-    PRINTF("%d ",a->u8[i]);
+    printf("%d ",a->u8[i]);
   }
 /*----------------------------------------------------------------------------*/
-  void 
+  void
   print_address_list(void)
   {
     accepted_address_t *a;
     for(a = list_head(address_list); a != NULL; a = a->next) {
-      PRINTF("[ADR]: ");
+      printf("[ADR]: ");
       print_address(&(a->address));
-      PRINTF("\n");  
+      printf("\n");
     }
   }
 /*----------------------------------------------------------------------------*/
@@ -100,7 +100,7 @@
   accepted_address_free(accepted_address_t* n)
   {
     list_remove(address_list, n);
-    int res = memb_free(&addresses_memb, n); 
+    int res = memb_free(&addresses_memb, n);
     if (res !=0){
       PRINTF("[AAL]: Failed to free an address. Reference count: %d\n",res);
     }
@@ -113,7 +113,7 @@
     for(tmp = list_head(address_list); tmp != NULL; tmp = tmp->next) {
       if(address_cmp(&(tmp->address),a)){
         return tmp;
-      }  
+      }
     }
     return NULL;
   }
@@ -123,14 +123,14 @@
   add_accepted_address(address_t* address)
   {
     accepted_address_t* res = address_list_contains(address);
-    if (res == NULL){ 
+    if (res == NULL){
       accepted_address_t* a = accepted_address_allocate();
       if (a != NULL){
         memset(a, 0, sizeof(*a));
         a->address = *address;
         list_add(address_list,a);
-      } 
-    } 
+      }
+    }
   }
 /*----------------------------------------------------------------------------*/
   void
@@ -155,7 +155,7 @@
     }
   }
 /*----------------------------------------------------------------------------*/
-  address_t 
+  address_t
   get_address_from_int(uint16_t value)
   {
     address_t address;
@@ -164,7 +164,7 @@
     return address;
   }
 /*----------------------------------------------------------------------------*/
-  address_t 
+  address_t
   get_address_from_array(uint8_t* array)
   {
     uint16_t i;
@@ -184,7 +184,7 @@
     }
   }
 /*----------------------------------------------------------------------------*/
-  uint8_t 
+  uint8_t
   is_broadcast(address_t* a)
   {
     uint16_t i;
@@ -196,7 +196,7 @@
     return 1;
   }
 /*----------------------------------------------------------------------------*/
-  uint8_t 
+  uint8_t
   address_cmp(address_t* a, address_t* b)
   {
     uint16_t i;
@@ -208,7 +208,7 @@
     return 1;
   }
 /*----------------------------------------------------------------------------*/
-  void 
+  void
   address_list_init(void)
   {
     list_init(address_list);

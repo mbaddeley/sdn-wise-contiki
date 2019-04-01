@@ -35,9 +35,21 @@
 
 #define _NET  1
 #define _BEACON_PERIOD    5
+
+#ifdef SDN_CONF_CONTROLLER_UPDATE_PERIOD
+#define _REPORT_PERIOD    SDN_CONF_CONTROLLER_UPDATE_PERIOD
+#else
 #define _REPORT_PERIOD    60
+#endif
+
 #define _RESET_PERIOD     100
-#define _RULE_TTL         255
+
+#ifdef SDN_CONF_FT_LIFETIME
+#define _RULE_TTL         SDN_CONF_FT_LIFETIME
+#else
+#define _RULE_TTL         100
+#endif
+
 #define _RSSI_MIN         0
 #define _RSSI_MAX         255
 #define _PACKET_TTL       255
