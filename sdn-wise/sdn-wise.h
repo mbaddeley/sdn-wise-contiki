@@ -46,6 +46,10 @@
   (code == CONFIG) ? ("CONFIG") : \
   (code == REG_PROXY) ? ("REG_PROXY") : "UNKNOWN")
 
+// // So we can keep track of the last REQUEST pid from each node
+// #if SINK
+// extern uint16_t last_request_pid[100];
+// #endif
 
 void rf_unicast_send(packet_t*);
 void rf_broadcast_send(packet_t*);

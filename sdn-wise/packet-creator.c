@@ -66,7 +66,7 @@
 static uint16_t pid_beacon = 0;
 static uint16_t pid_report = 0;
 static uint16_t pid_reg_proxy = 0;
-// static uint16_t pid_request = 0;
+static uint16_t pid_request = 0;
 static uint16_t pid_data = 0;
 #if !SINK
 #endif
@@ -179,7 +179,7 @@ create_and_send_request(packet_t* p)
       r->header.src = conf.my_address;
       r->header.typ = REQUEST;
       r->header.nxh = conf.nxh_vs_sink;
-      r->header.pid = conf.requests_count;
+      r->header.pid = ++pid_request;
 
       uint8_t* a = (uint8_t*)p;
       set_payload_at(r, 0, conf.requests_count);
@@ -202,14 +202,14 @@ create_and_send_request(packet_t* p)
       r1->header.src = conf.my_address;
       r1->header.typ = REQUEST;
       r1->header.nxh = conf.nxh_vs_sink;
-      r1->header.pid = conf.requests_count;
+      r1->header.pid = ++pid_request;
 
       r2->header.net = conf.my_net;
       r2->header.dst = conf.sink_address;
       r2->header.src = conf.my_address;
       r2->header.typ = REQUEST;
       r2->header.nxh = conf.nxh_vs_sink;
-      r2->header.pid = conf.requests_count;
+      r2->header.pid = pid_request;
 
       set_payload_at(r1, 0, conf.requests_count);
       set_payload_at(r1, 1, 0);
