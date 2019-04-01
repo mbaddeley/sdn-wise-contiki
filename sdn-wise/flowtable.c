@@ -582,7 +582,7 @@
         if(e->stats.ttl == e->stats.count) {
           entry_free(e);
         }
-        printf("TTL: %u/%u\n", e->stats.ttl, e->stats.count);
+        // printf("TTL: %u/%u\n", e->stats.ttl, e->stats.count);
         break;
       }
     }
