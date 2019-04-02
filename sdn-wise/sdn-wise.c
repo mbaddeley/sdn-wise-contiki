@@ -124,7 +124,7 @@ static uint16_t pid_data = 0;
         default:
           break;
       }
-      LOG_STAT("OUT ");
+      LOG_STAT("TX ");
 #if LOG_LEVEL <= (LOG_LEVEL_STAT)
       print_packet(p);
 #endif

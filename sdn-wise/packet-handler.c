@@ -134,7 +134,7 @@ uint16_t last_request_pid[100] = {0}; // FIXME: 100 is a magic number
                first OPEN_PATH from the controller has dest as the tgt,
                then we create a second OPEN_PATH, and forward that along. */
         if (is_my_address(&(p->header.dst))) {
-          LOG_STAT("IN ");
+          LOG_STAT("RX ");
 #if SINK
           switch(p->header.typ) {
             case OPEN_PATH:

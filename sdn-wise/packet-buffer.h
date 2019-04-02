@@ -40,13 +40,13 @@
 #define SRC_INDEX (DST_INDEX + ADDRESS_LENGTH)
 #define TYP_INDEX (SRC_INDEX + ADDRESS_LENGTH)
 #define PID_INDEX (TYP_INDEX + 1)
-#define TTL_INDEX (PID_INDEX + 1)
+#define TTL_INDEX (PID_INDEX + 2)
 #define NXH_INDEX (TTL_INDEX + 1)
 #define PLD_INDEX (NXH_INDEX + ADDRESS_LENGTH)
 // #define PID_INDEX (NXH_INDEX + ADDRESS_LENGTH)
 // #define PLD_INDEX (PID_INDEX + 1)
 
-#define MAX_PAYLOAD_LENGTH  105
+#define MAX_PAYLOAD_LENGTH  104
 #define MAX_PACKET_LENGTH       (MAX_PAYLOAD_LENGTH + PLD_INDEX)
 
   typedef enum __attribute__((__packed__)) packet_type{
@@ -70,7 +70,7 @@
     address_t dst;
     address_t src;
     packet_type_t typ;
-    uint8_t pid;
+    uint16_t pid;
     uint8_t ttl;
     address_t nxh;
   } header_t;
