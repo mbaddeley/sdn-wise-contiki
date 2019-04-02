@@ -1,8 +1,21 @@
+print-%:
+	@echo '$*=$($*)'
+	
 CONTIKI_PROJECT = sdn-wise
 all: $(CONTIKI_PROJECT)
 
 CONTIKI = ../contiki
 CONTIKI_WITH_RIME = 1
+
+COOJA ?= 1
+ifneq ($(COOJA),)
+    CFLAGS += -DCOOJA=$(COOJA)
+endif
+
+SINK ?= 0
+ifneq ($(SINK),)
+    CFLAGS += -DSINK=$(SINK)
+endif
 
 # SDN_WISE_DEBUG ?= 1
 ifneq ($(SDN_WISE_DEBUG),)
