@@ -30,6 +30,7 @@
 #include <string.h>
 #include <stdio.h>
 #include "contiki.h"
+#include "node-id.h"
 #include "dev/watchdog.h"
 
 /* Log configuration */
@@ -134,11 +135,10 @@ uint16_t last_request_pid[100] = {0}; // FIXME: 100 is a magic number
                first OPEN_PATH from the controller has dest as the tgt,
                then we create a second OPEN_PATH, and forward that along. */
         if (is_my_address(&(p->header.dst))) {
-          LOG_STAT("RX ");
 #if SINK
           switch(p->header.typ) {
             case OPEN_PATH:
-              p->header.pid = last_request_pid[p->payload[p->header.len - (PLD_INDEX + 1)]];
+              // p->header.pid = last_request_pid[p->payload[p->header.len - (PLD_INDEX + 1)]];
               break;
             case REQUEST:
               last_request_pid[p->header.src.u8[1]] = p->header.pid;
@@ -148,7 +148,10 @@ uint16_t last_request_pid[100] = {0}; // FIXME: 100 is a magic number
           }
 #endif /* SINK */
 #if LOG_LEVEL <= (LOG_LEVEL_STAT)
+          if(p->header.typ != OPEN_PATH) {
+            LOG_STAT("RX ");
             print_packet(p);
+          }
 #endif
         }
           switch (p->header.typ){
@@ -276,71 +279,74 @@ uint16_t last_request_pid[100] = {0}; // FIXME: 100 is a magic number
       my_position++;
     }
 
-    if (my_index == -1){
-	printf("[PHD]: Nothing to learn, matching...\n");
-	match_packet(p);
+    if (my_index == -1) {
+    	printf("[PHD]: Nothing to learn, matching...\n");
+    	match_packet(p);
     } else {
-    if (my_position > 0)
-    {
-      uint8_t prev = my_index - ADDRESS_LENGTH;
-      uint8_t first = start;
-      entry_t* e = create_entry();
+      if (my_position > 0) {
+        uint8_t prev = my_index - ADDRESS_LENGTH;
+        uint8_t first = start;
+        entry_t* e = create_entry();
 
-      window_t* w = create_window();
-      w->operation = EQUAL;
-      w->size = SIZE_2;
-      w->lhs = DST_INDEX;
-      w->lhs_location = PACKET;
-      w->rhs = MERGE_BYTES(p->payload[first], p->payload[first+1]);
-      w->rhs_location = CONST;
+        window_t* w = create_window();
+        w->operation = EQUAL;
+        w->size = SIZE_2;
+        w->lhs = DST_INDEX;
+        w->lhs_location = PACKET;
+        w->rhs = MERGE_BYTES(p->payload[first], p->payload[first+1]);
+        w->rhs_location = CONST;
 
-      add_window(e,w);
+        add_window(e,w);
 
-      for (i = 0; i<n_windows; ++i)
-      {
-        add_window(e, get_window_from_array(&(p->payload[i*WINDOW_SIZE + 1])));
+        for (i = 0; i<n_windows; ++i)
+        {
+          add_window(e, get_window_from_array(&(p->payload[i*WINDOW_SIZE + 1])));
+        }
+
+        action_t* a = create_action(FORWARD_U, &(p->payload[prev]), ADDRESS_LENGTH);
+        add_action(e,a);
+        add_entry(e);
       }
 
-      action_t* a = create_action(FORWARD_U, &(p->payload[prev]), ADDRESS_LENGTH);
-      add_action(e,a);
-      add_entry(e);
-    }
+      if (my_position < path_len-1) {
+        uint8_t next = my_index + ADDRESS_LENGTH;
+        uint8_t last = end - ADDRESS_LENGTH;
+        entry_t* e = create_entry();
 
-    if (my_position < path_len-1)
-    {
-      uint8_t next = my_index + ADDRESS_LENGTH;
-      uint8_t last = end - ADDRESS_LENGTH;
-      entry_t* e = create_entry();
+        window_t* w = create_window();
+        w->operation = EQUAL;
+        w->size = SIZE_2;
+        w->lhs = DST_INDEX;
+        w->lhs_location = PACKET;
+        w->rhs = MERGE_BYTES(p->payload[last], p->payload[last+1]);
+        w->rhs_location = CONST;
 
-      window_t* w = create_window();
-      w->operation = EQUAL;
-      w->size = SIZE_2;
-      w->lhs = DST_INDEX;
-      w->lhs_location = PACKET;
-      w->rhs = MERGE_BYTES(p->payload[last], p->payload[last+1]);
-      w->rhs_location = CONST;
+        add_window(e,w);
 
-      add_window(e,w);
+        for (i = 0; i<n_windows; ++i)
+        {
+          add_window(e, get_window_from_array(&(p->payload[i*WINDOW_SIZE + 1])));
+        }
 
-      for (i = 0; i<n_windows; ++i)
-      {
-        add_window(e, get_window_from_array(&(p->payload[i*WINDOW_SIZE + 1])));
+        action_t* a = create_action(FORWARD_U, &(p->payload[next]), ADDRESS_LENGTH);
+        add_action(e,a);
+        add_entry(e);
+
+        address_t next_address = get_address_from_array(&(p->payload[next]));
+        p->header.nxh = next_address;
+        p->header.dst = next_address;
+        rf_unicast_send(p);
       }
 
-      action_t* a = create_action(FORWARD_U, &(p->payload[next]), ADDRESS_LENGTH);
-      add_action(e,a);
-      add_entry(e);
-
-      address_t next_address = get_address_from_array(&(p->payload[next]));
-      p->header.nxh = next_address;
-      p->header.dst = next_address;
-      rf_unicast_send(p);
+      if (my_position == path_len-1) {
+#if !SINK
+        LOG_STAT("RX ");
+        print_packet(p);
+        have_received_open_path = 1;
+#endif
+        packet_deallocate(p);
+      }
     }
-
-    if (my_position == path_len-1){
-      packet_deallocate(p);
-    }
-	}
   }
 /*----------------------------------------------------------------------------*/
   void

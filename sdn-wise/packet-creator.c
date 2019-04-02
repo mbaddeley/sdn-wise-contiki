@@ -66,8 +66,10 @@
 static uint16_t pid_beacon = 0;
 static uint16_t pid_report = 0;
 static uint16_t pid_reg_proxy = 0;
-static uint16_t pid_request = 0;
 static uint16_t pid_data = 0;
+
+uint16_t pid_request = 1;
+uint8_t have_received_open_path = 0;
 #if !SINK
 #endif
 // static uint16_t pid_config = 0;
@@ -171,6 +173,9 @@ create_and_send_request(packet_t* p)
 
   uint8_t i = 0;
 
+  // LOG_STAT("REQ ");
+  // print_packet(p);
+
   if (p->header.len < MAX_PAYLOAD_LENGTH){
     packet_t* r = create_packet_empty();
     if (r != NULL){
@@ -179,7 +184,13 @@ create_and_send_request(packet_t* p)
       r->header.src = conf.my_address;
       r->header.typ = REQUEST;
       r->header.nxh = conf.nxh_vs_sink;
-      r->header.pid = ++pid_request;
+      if(have_received_open_path) {
+        r->header.pid = ++pid_request;
+        have_received_open_path = 0;
+      } else {
+        r->header.pid = pid_request;
+      }
+
 
       uint8_t* a = (uint8_t*)p;
       set_payload_at(r, 0, conf.requests_count);

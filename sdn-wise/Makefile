@@ -1,6 +1,6 @@
 print-%:
 	@echo '$*=$($*)'
-	
+
 CONTIKI_PROJECT = sdn-wise
 all: $(CONTIKI_PROJECT)
 
@@ -23,11 +23,17 @@ ifneq ($(SDN_WISE_DEBUG),)
 endif
 
 # SDN Configuration
+REPORT_FREQ ?= 60
 ifneq ($(REPORT_FREQ),)
     CFLAGS += -DSDN_CONF_CONTROLLER_UPDATE_PERIOD=$(REPORT_FREQ)
 endif
+RULE_TTL ?= 20
 ifneq ($(RULE_TTL),)
     CFLAGS += -DSDN_CONF_FT_LIFETIME=$(RULE_TTL)
+endif
+DATA_RATE ?= 75
+ifneq ($(DATA_RATE),)
+    CFLAGS += -DDATA_RATE=$(DATA_RATE)
 endif
 
 # Logging levels

@@ -420,7 +420,7 @@ PROCESS_THREAD(beacon_timer_proc, ev, data) {
 
     PROCESS_BEGIN();
     while(1){
-      etimer_set(&et, 5 * CLOCK_SECOND);
+      etimer_set(&et, DATA_RATE * CLOCK_SECOND);
       PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
       process_post(&main_proc, RF_SEND_DATA_EVENT, (process_data_t)NULL);
     }
