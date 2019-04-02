@@ -342,7 +342,7 @@ uint16_t last_request_pid[100] = {0}; // FIXME: 100 is a magic number
 #if !SINK
         LOG_STAT("RX ");
         print_packet(p);
-        have_received_open_path = 1;
+        have_received_open_path[p->header.match] = 1;
 #endif
         packet_deallocate(p);
       }

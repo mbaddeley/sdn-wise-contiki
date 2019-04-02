@@ -74,8 +74,8 @@
     printf("%s ",  SDN_CODE_STRING(p->header.typ));
     switch(p->header.typ) {
       case REQUEST:
-      printf("f:%u t:%u s:%u d:%u h:%u id:%u\n",
-        p->payload[8],
+      printf("m:%u t:%u s:%u d:%u h:%u id:%u\n",
+        p->header.match,
         p->payload[6],
         p->header.src.u8[1],
         p->header.dst.u8[1],
@@ -83,7 +83,8 @@
         p->header.pid);
       break;
       case OPEN_PATH:
-      printf("s:%u d:%u h:%u id:%u\n",
+      printf("m:%u s:%u d:%u h:%u id:%u\n",
+        p->header.match,
         p->payload[2],
         p->payload[p->header.len - (PLD_INDEX + 1)],
         conf.hops_from_sink,
@@ -126,9 +127,9 @@
 /*----------------------------------------------------------------------------*/
   packet_t*
   create_packet_payload(uint8_t net, address_t* dst, address_t* src,
-    packet_type_t typ, uint8_t pid, address_t* nxh, uint8_t* payload, uint8_t len)
+    packet_type_t typ, uint16_t pid, uint8_t match, address_t* nxh, uint8_t* payload, uint8_t len)
   {
-    packet_t* p = create_packet(net, dst, src, typ, pid, nxh);
+    packet_t* p = create_packet(net, dst, src, typ, pid, match, nxh);
     if (p != NULL){
       uint8_t i;
 
@@ -192,7 +193,7 @@
 /*----------------------------------------------------------------------------*/
   packet_t*
   create_packet(uint8_t net, address_t* dst, address_t* src, packet_type_t typ,
-    uint8_t pid, address_t* nxh)
+    uint16_t pid, uint8_t match, address_t* nxh)
   {
     packet_t* p = packet_allocate();
     if (p != NULL){
@@ -204,6 +205,7 @@
       p->header.typ=typ;
       p->header.nxh=*nxh;
       p->header.pid=pid;
+      p->header.match=match;
       restore_ttl(p);
     }
     return p;

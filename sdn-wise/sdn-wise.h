@@ -47,8 +47,10 @@
   (code == REG_PROXY) ? ("REG_PROXY") : "UNKNOWN")
 
 // // So we can keep track of the last REQUEST pid from each node
-extern uint16_t pid_request;
-extern uint8_t have_received_open_path;
+
+#define MAX_NODES 32
+extern uint16_t pid_request[MAX_NODES];
+extern uint8_t have_received_open_path[MAX_NODES];
 
 void rf_unicast_send(packet_t*);
 void rf_broadcast_send(packet_t*);

@@ -40,13 +40,14 @@
 #define SRC_INDEX (DST_INDEX + ADDRESS_LENGTH)
 #define TYP_INDEX (SRC_INDEX + ADDRESS_LENGTH)
 #define PID_INDEX (TYP_INDEX + 1)
-#define TTL_INDEX (PID_INDEX + 2)
+#define MATCH_INDEX (PID_INDEX + 2)
+#define TTL_INDEX (MATCH_INDEX + 1)
 #define NXH_INDEX (TTL_INDEX + 1)
 #define PLD_INDEX (NXH_INDEX + ADDRESS_LENGTH)
 // #define PID_INDEX (NXH_INDEX + ADDRESS_LENGTH)
 // #define PLD_INDEX (PID_INDEX + 1)
 
-#define MAX_PAYLOAD_LENGTH  104
+#define MAX_PAYLOAD_LENGTH  103
 #define MAX_PACKET_LENGTH       (MAX_PAYLOAD_LENGTH + PLD_INDEX)
 
   typedef enum __attribute__((__packed__)) packet_type{
@@ -71,6 +72,7 @@
     address_t src;
     packet_type_t typ;
     uint16_t pid;
+    uint8_t match;
     uint8_t ttl;
     address_t nxh;
   } header_t;
@@ -89,10 +91,10 @@
   void restore_ttl(packet_t*);
 
   packet_t* create_packet(uint8_t net, address_t* dst, address_t* src, packet_type_t typ,
-    uint8_t pid, address_t* nxh);
+    uint16_t pid, uint8_t match, address_t* nxh);
   packet_t* create_packet_empty(void);
   packet_t* create_packet_payload(uint8_t net, address_t* dst, address_t* src, packet_type_t typ,
-    uint8_t pid, address_t* nxh, uint8_t* paylod, uint8_t len);
+    uint16_t pid, uint8_t match, address_t* nxh, uint8_t* paylod, uint8_t len);
   void packet_deallocate(packet_t*);
 
   void packet_buffer_init(void);
