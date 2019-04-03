@@ -31,6 +31,7 @@
 #include <stdio.h>
 
 #include "contiki.h"
+#include "node-id.h"
 #include "address.h"
 #include "node-conf.h"
 #include "net/rime/rime.h"
@@ -44,6 +45,22 @@
 #else
 #define PRINTF(...)
 #endif
+
+#define MAX_TX_NODES 5
+#define TX_NODES 10,11,17,16,15
+static int data_tx_nodes[MAX_TX_NODES] = {TX_NODES};
+
+static uint8_t
+is_a_tx_node() {
+  int i;
+  for (i = 0; i < MAX_TX_NODES; i++) {
+    if (data_tx_nodes[i] == node_id) {
+      return 1;
+    }
+  }
+  return 0;
+}
+
 /*----------------------------------------------------------------------------*/
   node_conf_t conf;
 /*----------------------------------------------------------------------------*/
@@ -80,6 +97,8 @@
     conf.hops_from_sink = _PACKET_TTL;
     conf.reset_period = _RESET_PERIOD;
 #endif
+    // HACK: This allows us to pick and choose which nodes send data REMOVEME
+    conf.send_data = is_a_tx_node();
   }
 /*----------------------------------------------------------------------------*/
   void
@@ -96,6 +115,7 @@
     printf(" (hops: %d, distance: %d)\n", conf.hops_from_sink, conf.distance_from_sink);
     printf("[CFG]: - Sink: ");
     print_address(&(conf.sink_address));
+    printf("[CFG]: - TX_NODE: %u", conf.send_data);
     printf("\n");
   }
 /*----------------------------------------------------------------------------*/

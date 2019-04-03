@@ -17,21 +17,25 @@ ifneq ($(SINK),)
     CFLAGS += -DSINK=$(SINK)
 endif
 
-# SDN_WISE_DEBUG ?= 1
+SDN_WISE_DEBUG ?= 0
 ifneq ($(SDN_WISE_DEBUG),)
     CFLAGS += -DSDN_WISE_DEBUG=$(SDN_WISE_DEBUG)
 endif
 
 # SDN Configuration
+BEACON_FREQ ?= 10
+ifneq ($(BEACON_FREQ),)
+    CFLAGS += -DSDN_CONF_BEACON_PERIOD=$(BEACON_FREQ)
+endif
 REPORT_FREQ ?= 60
 ifneq ($(REPORT_FREQ),)
     CFLAGS += -DSDN_CONF_CONTROLLER_UPDATE_PERIOD=$(REPORT_FREQ)
 endif
-RULE_TTL ?= 20
+RULE_TTL ?= 0
 ifneq ($(RULE_TTL),)
     CFLAGS += -DSDN_CONF_FT_LIFETIME=$(RULE_TTL)
 endif
-DATA_RATE ?= 75
+DATA_RATE ?= 60
 ifneq ($(DATA_RATE),)
     CFLAGS += -DDATA_RATE=$(DATA_RATE)
 endif

@@ -34,7 +34,12 @@
 #include "address.h"
 
 #define _NET  1
+
+#ifdef SDN_CONF_BEACON_PERIOD
+#define _BEACON_PERIOD    SDN_CONF_BEACON_PERIOD
+#else
 #define _BEACON_PERIOD    5
+#endif
 
 #ifdef SDN_CONF_CONTROLLER_UPDATE_PERIOD
 #define _REPORT_PERIOD    SDN_CONF_CONTROLLER_UPDATE_PERIOD
@@ -72,6 +77,7 @@
     uint8_t is_active;
     uint8_t requests_count;
     uint8_t responses_count;
+    uint8_t send_data;
   } node_conf_t;
 
   extern node_conf_t conf;

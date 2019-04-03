@@ -28,6 +28,8 @@
  */
 
 #include "contiki.h"
+#include "node-id.h"
+#include "lib/random.h"
 #include "net/rime/rime.h"
 #include "net/linkaddr.h"
 #include "dev/watchdog.h"
@@ -84,6 +86,13 @@
 #define PRINTF(...)
 #endif
 
+
+#define RAND_BETWEEN(MAX, MIN)  (int)((MIN * CLOCK_SECOND) +                  \
+                                ((((MAX - MIN) * CLOCK_SECOND) *              \
+                                (uint32_t)random_rand()) / RANDOM_RAND_MAX))
+
+#define RAND_UP_TO(n)           (int)(((n * CLOCK_SECOND) * (uint32_t)random_rand()) / RANDOM_RAND_MAX)
+
 /*----------------------------------------------------------------------------*/
   PROCESS(main_proc, "Main Process");
   PROCESS(rf_u_send_proc, "RF Unicast Send Process");
@@ -107,23 +116,16 @@
   static uint8_t uart_buffer[UART_BUFFER_SIZE];
   static uint8_t uart_buffer_index = 0;
   static uint8_t uart_buffer_expected = 0;
+  static uint8_t uart_received = 0;
 #if !SINK
   static uint8_t count=0;
   static packet_t* p;
 #endif
 /*----------------------------------------------------------------------------*/
-static uint16_t pid_data = 0;
   void
   rf_unicast_send(packet_t* p)
   {
     if(is_my_address(&(p->header.src))) {
-      switch(p->header.typ) {
-        case DATA:
-          p->header.pid = ++pid_data;
-          break;
-        default:
-          break;
-      }
       LOG_STAT("TX ");
 #if LOG_LEVEL <= (LOG_LEVEL_STAT)
       print_packet(p);
@@ -245,6 +247,7 @@ static uint16_t pid_data = 0;
 
         case UART_RECEIVE_EVENT:
         leds_toggle(LEDS_GREEN);
+        uart_received = 1;
         process_post(&packet_handler_proc, NEW_PACKET_EVENT, (process_data_t)data);
         break;
 
@@ -278,10 +281,10 @@ static uint16_t pid_data = 0;
         case RF_SEND_DATA_EVENT:
 // #if MOBILE
 #if !SINK
-        if (conf.is_active){
+        if (conf.is_active && conf.send_data){
           p = create_data(count);
           if (p != NULL){
-              match_packet(p);
+            match_packet(p);
           }
           count++;
         }
@@ -391,7 +394,7 @@ PROCESS_THREAD(beacon_timer_proc, ev, data) {
         PROCESS_WAIT_EVENT_UNTIL(ev == ACTIVATE_EVENT);
       }
 #endif
-      etimer_set(&et, conf.beacon_period * CLOCK_SECOND);
+      etimer_set(&et, (conf.beacon_period + node_id) * CLOCK_SECOND);
       PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
       process_post(&main_proc, RF_SEND_BEACON_EVENT, (process_data_t)NULL);
     }
@@ -408,7 +411,7 @@ PROCESS_THREAD(beacon_timer_proc, ev, data) {
         PROCESS_WAIT_EVENT_UNTIL(ev == ACTIVATE_EVENT);
       }
 #endif
-      etimer_set(&et, conf.report_period * CLOCK_SECOND);
+      etimer_set(&et, (conf.report_period + node_id) * CLOCK_SECOND);
       PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
       process_post(&main_proc, RF_SEND_REPORT_EVENT, (process_data_t)NULL);
     }
@@ -420,23 +423,47 @@ PROCESS_THREAD(beacon_timer_proc, ev, data) {
 
     PROCESS_BEGIN();
     while(1){
-      etimer_set(&et, DATA_RATE * CLOCK_SECOND);
+      etimer_set(&et, (DATA_RATE + node_id) * CLOCK_SECOND);
       PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
       process_post(&main_proc, RF_SEND_DATA_EVENT, (process_data_t)NULL);
     }
     PROCESS_END();
   }
 
+#if SINK
+// static uint16_t pid_open_path = 0;
+uint16_t last_request_pid[100] = {0}; // FIXME: 100 is a magic number
+#endif /* SINK */
 /*----------------------------------------------------------------------------*/
   PROCESS_THREAD(packet_handler_proc, ev, data) {
     PROCESS_BEGIN();
     while(1) {
       PROCESS_WAIT_EVENT_UNTIL(ev == NEW_PACKET_EVENT);
       packet_t* p = (packet_t*)data;
-      PRINTF("[RX ]: ");
-#if SDN_WISE_DEBUG
-      print_packet(p);
+      /* NB: We just do this so we dont print the openpath twice, as the
+             first OPEN_PATH from the controller has dest as the tgt,
+             then we create a second OPEN_PATH, and forward that along. */
+      if (is_my_address(&(p->header.dst))) {
+#if SINK
+        switch(p->header.typ) {
+          case OPEN_PATH:
+            // p->header.pid = last_request_pid[p->payload[p->header.len - (PLD_INDEX + 1)]];
+            break;
+          case REQUEST:
+            last_request_pid[p->header.src.u8[1]] = p->header.pid;
+            break;
+          default:
+            break;
+        }
+#endif /* SINK */
+#if LOG_LEVEL <= (LOG_LEVEL_STAT)
+        if(p->header.typ != OPEN_PATH && !uart_received) {
+          LOG_STAT("RX ");
+          print_packet(p);
+        }
 #endif
+      }
+      uart_received = 0;
       handle_packet(p);
     }
     PROCESS_END();

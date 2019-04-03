@@ -119,10 +119,6 @@ const void* conf_ptr[RULE_TTL+1] =
   static void handle_config(packet_t*);
 
 /*----------------------------------------------------------------------------*/
-#if SINK
-// static uint16_t pid_open_path = 0;
-uint16_t last_request_pid[100] = {0}; // FIXME: 100 is a magic number
-#endif /* SINK */
   void
   handle_packet(packet_t* p)
   {
@@ -131,29 +127,6 @@ uint16_t last_request_pid[100] = {0}; // FIXME: 100 is a magic number
         handle_beacon(p);
       } else {
       if (is_my_address(&(p->header.nxh))){
-        /* NB: We just do this so we dont print the openpath twice, as the
-               first OPEN_PATH from the controller has dest as the tgt,
-               then we create a second OPEN_PATH, and forward that along. */
-        if (is_my_address(&(p->header.dst))) {
-#if SINK
-          switch(p->header.typ) {
-            case OPEN_PATH:
-              // p->header.pid = last_request_pid[p->payload[p->header.len - (PLD_INDEX + 1)]];
-              break;
-            case REQUEST:
-              last_request_pid[p->header.src.u8[1]] = p->header.pid;
-              break;
-            default:
-              break;
-          }
-#endif /* SINK */
-#if LOG_LEVEL <= (LOG_LEVEL_STAT)
-          if(p->header.typ != OPEN_PATH) {
-            LOG_STAT("RX ");
-            print_packet(p);
-          }
-#endif
-        }
           switch (p->header.typ){
             case DATA:
               // PRINTF("[PHD]: Data\n");
@@ -343,6 +316,7 @@ uint16_t last_request_pid[100] = {0}; // FIXME: 100 is a magic number
         LOG_STAT("RX ");
         print_packet(p);
         have_received_open_path[p->header.match] = 1;
+
 #endif
         packet_deallocate(p);
       }

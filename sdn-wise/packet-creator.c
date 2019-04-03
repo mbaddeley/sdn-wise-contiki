@@ -112,6 +112,7 @@ create_data(uint8_t count)
       p->header.typ = DATA;
       p->header.nxh = conf.nxh_vs_sink;
       p->header.pid = ++pid_data;
+      PRINTF("PID_DATA: %u\n", pid_data);
       set_payload_at(p, 0, count);
     }
   return p;
@@ -178,6 +179,14 @@ create_and_send_request(packet_t* p)
   // print_packet(p);
 
   if (p->header.len < MAX_PAYLOAD_LENGTH){
+
+//     if (is_my_address(&(p->header.src))) {
+//       LOG_STAT("TX ");
+// #if LOG_LEVEL <= (LOG_LEVEL_STAT)
+//       print_packet(p);
+// #endif
+//     }
+
     packet_t* r = create_packet_empty();
     if (r != NULL){
       r->header.net = conf.my_net;
@@ -195,12 +204,15 @@ create_and_send_request(packet_t* p)
       }
 
       r->header.match = r->payload[8];
-      if(have_received_open_path[r->header.match]) {
-        r->header.pid = ++pid_request[r->header.match];
-        have_received_open_path[r->header.match] = 0;
-      } else {
-        r->header.pid = pid_request[r->header.match];
-      }
+
+      // if(have_received_open_path[r->header.match]) {
+      //   r->header.pid = ++pid_request[r->header.match];
+      //   have_received_open_path[r->header.match] = 0;
+      // } else {
+      //   r->header.pid = pid_request[r->header.match];
+      // }
+
+      r->header.pid = ++pid_request[r->header.match];
 
       rf_unicast_send(r);
       conf.requests_count++;
