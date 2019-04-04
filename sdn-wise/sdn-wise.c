@@ -58,6 +58,7 @@
 #include "packet-creator.h"
 #include "neighbor-table.h"
 #include "node-conf.h"
+#include "sdn-wise-pwr.h"
 
 #define UART_BUFFER_SIZE      MAX_PACKET_LENGTH
 
@@ -98,7 +99,8 @@
   PROCESS(rf_u_send_proc, "RF Unicast Send Process");
   PROCESS(rf_b_send_proc, "RF Broadcast Send Process");
   PROCESS(packet_handler_proc, "Packet Handler Process");
-  PROCESS(timer_proc, "Timer Process");
+  // PROCESS(timer_proc, "Timer Process");
+  PROCESS(initialisation_timer_proc, "Initialisation Timer Process");
   PROCESS(beacon_timer_proc, "Beacon Timer Process");
   PROCESS(report_timer_proc, "Report Timer Process");
   PROCESS(data_timer_proc, "Data Timer Process");
@@ -106,7 +108,8 @@
     &main_proc,
     &rf_u_send_proc,
     &rf_b_send_proc,
-    &timer_proc,
+    // &timer_proc,
+    &initialisation_timer_proc,
     &beacon_timer_proc,
     &report_timer_proc,
     &packet_handler_proc,
@@ -228,6 +231,10 @@
 
     leds_init();
 
+#if WITH_PWR_STATS
+    sdn_pwr_start(CLOCK_SECOND * SDN_STATS_PERIOD);
+#endif
+
 #if SINK
     send_to_uart(create_reg_proxy());
 #endif
@@ -235,15 +242,15 @@
     while(1) {
       PROCESS_WAIT_EVENT();
       switch(ev) {
-        case TIMER_EVENT:
-      // test_handle_open_path();
-      // test_flowtable();
-      // test_neighbor_table();
-      // test_packet_buffer();
-      // test_address_list();
-        // print_flowtable();
-        // print_node_conf();
-        break;
+      //   case TIMER_EVENT:
+      // // test_handle_open_path();
+      // // test_flowtable();
+      // // test_neighbor_table();
+      // // test_packet_buffer();
+      // // test_address_list();
+      //   // print_flowtable();
+      //   // print_node_conf();
+      //   break;
 
         case UART_RECEIVE_EVENT:
         leds_toggle(LEDS_GREEN);
@@ -257,6 +264,7 @@
           conf.is_active = 1;
           process_post(&beacon_timer_proc, ACTIVATE_EVENT, (process_data_t)NULL);
           process_post(&report_timer_proc, ACTIVATE_EVENT, (process_data_t)NULL);
+          process_post(&initialisation_timer_proc, ACTIVATE_EVENT, (process_data_t)NULL);
         }
         case RF_U_RECEIVE_EVENT:
         process_post(&packet_handler_proc, NEW_PACKET_EVENT, (process_data_t)data);
@@ -372,23 +380,53 @@
     PROCESS_END();
   }
 /*----------------------------------------------------------------------------*/
-  PROCESS_THREAD(timer_proc, ev, data) {
-    static struct etimer et;
-    PROCESS_BEGIN();
+  // PROCESS_THREAD(timer_proc, ev, data) {
+  //   static struct etimer et;
+  //   PROCESS_BEGIN();
+  //
+  //   while(1) {
+  //     etimer_set(&et, 3 * CLOCK_SECOND);
+  //     PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
+  //     process_post(&main_proc, TIMER_EVENT, (process_data_t)NULL);
+  //   }
+  //   PROCESS_END();
+  // }
 
-    while(1) {
-      etimer_set(&et, 3 * CLOCK_SECOND);
+
+#if INITIALISATION_PERIOD
+static uint8_t init_period = INITIALISATION_PERIOD;
+/*----------------------------------------------------------------------------*/
+PROCESS_THREAD(initialisation_timer_proc, ev, data) {
+    static struct etimer et;
+
+    PROCESS_BEGIN();
+    while(init_period){
+#if !SINK
+      if (!conf.is_active){
+        PROCESS_WAIT_EVENT_UNTIL(ev == ACTIVATE_EVENT);
+      }
+#endif
+      etimer_set(&et, 60 * CLOCK_SECOND);
+      init_period--;
+      // LOG_STAT("INIT %u\n", init_period);
       PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
-      process_post(&main_proc, TIMER_EVENT, (process_data_t)NULL);
     }
+    process_post(&data_timer_proc, ACTIVATE_EVENT, (process_data_t)NULL);
     PROCESS_END();
-  }
+}
+#endif
+
+
 /*----------------------------------------------------------------------------*/
 PROCESS_THREAD(beacon_timer_proc, ev, data) {
     static struct etimer et;
 
     PROCESS_BEGIN();
+#if INITIALISATION_PERIOD
+    while(init_period){
+#else
     while(1){
+#endif
 #if !SINK
       if (!conf.is_active){
         PROCESS_WAIT_EVENT_UNTIL(ev == ACTIVATE_EVENT);
@@ -405,7 +443,11 @@ PROCESS_THREAD(beacon_timer_proc, ev, data) {
     static struct etimer et;
 
     PROCESS_BEGIN();
+#if INITIALISATION_PERIOD
+    while(init_period){
+#else
     while(1){
+#endif
 #if !SINK
       if (!conf.is_active){
         PROCESS_WAIT_EVENT_UNTIL(ev == ACTIVATE_EVENT);
@@ -423,47 +465,25 @@ PROCESS_THREAD(beacon_timer_proc, ev, data) {
 
     PROCESS_BEGIN();
     while(1){
-      etimer_set(&et, (DATA_RATE + node_id) * CLOCK_SECOND);
+#if INITIALISATION_PERIOD
+      if (!conf.is_active){
+        PROCESS_WAIT_EVENT_UNTIL(ev == ACTIVATE_EVENT);
+      }
+#endif
+      int data_period = RAND_BETWEEN(75, 60);
+      etimer_set(&et, data_period);
       PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
       process_post(&main_proc, RF_SEND_DATA_EVENT, (process_data_t)NULL);
     }
     PROCESS_END();
   }
 
-#if SINK
-// static uint16_t pid_open_path = 0;
-uint16_t last_request_pid[100] = {0}; // FIXME: 100 is a magic number
-#endif /* SINK */
 /*----------------------------------------------------------------------------*/
   PROCESS_THREAD(packet_handler_proc, ev, data) {
     PROCESS_BEGIN();
     while(1) {
       PROCESS_WAIT_EVENT_UNTIL(ev == NEW_PACKET_EVENT);
       packet_t* p = (packet_t*)data;
-      /* NB: We just do this so we dont print the openpath twice, as the
-             first OPEN_PATH from the controller has dest as the tgt,
-             then we create a second OPEN_PATH, and forward that along. */
-      if (is_my_address(&(p->header.dst))) {
-#if SINK
-        switch(p->header.typ) {
-          case OPEN_PATH:
-            // p->header.pid = last_request_pid[p->payload[p->header.len - (PLD_INDEX + 1)]];
-            break;
-          case REQUEST:
-            last_request_pid[p->header.src.u8[1]] = p->header.pid;
-            break;
-          default:
-            break;
-        }
-#endif /* SINK */
-#if LOG_LEVEL <= (LOG_LEVEL_STAT)
-        if(p->header.typ != OPEN_PATH && !uart_received) {
-          LOG_STAT("RX ");
-          print_packet(p);
-        }
-#endif
-      }
-      uart_received = 0;
       handle_packet(p);
     }
     PROCESS_END();

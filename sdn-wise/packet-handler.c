@@ -118,6 +118,13 @@ const void* conf_ptr[RULE_TTL+1] =
   static void handle_open_path(packet_t*);
   static void handle_config(packet_t*);
 
+
+#if SINK
+// static uint16_t pid_open_path = 0;
+static uint8_t just_received_open_path = 0;
+uint16_t last_request_pid[100] = {0}; // FIXME: 100 is a magic number
+static uint8_t last_open_path_match = 0;
+#endif /* SINK */
 /*----------------------------------------------------------------------------*/
   void
   handle_packet(packet_t* p)
@@ -126,7 +133,36 @@ const void* conf_ptr[RULE_TTL+1] =
       if (p->header.typ == BEACON){
         handle_beacon(p);
       } else {
-      if (is_my_address(&(p->header.nxh))){
+        if (is_my_address(&(p->header.nxh))){
+          if (is_my_address(&(p->header.dst))) {
+#if SINK
+            switch(p->header.typ) {
+              case OPEN_PATH:
+                just_received_open_path = 1;
+                last_open_path_match = p->header.match;
+                break;
+              case REQUEST:
+                last_request_pid[p->header.src.u8[1]] = p->header.pid;
+                break;
+              case DATA:
+                if(just_received_open_path) {
+                  p->header.src.u8[1] = last_open_path_match;
+                  just_received_open_path = 0;
+                }
+              default:
+                break;
+            }
+#endif /* SINK */
+#if LOG_LEVEL <= (LOG_LEVEL_STAT)
+            /* NB: We just do this so we dont print the openpath twice, as the
+                   first OPEN_PATH from the controller has dest as the tgt,
+                   then we create a second OPEN_PATH, and forward that along. */
+            if(p->header.typ != OPEN_PATH) {
+              LOG_STAT("RX ");
+              print_packet(p);
+            }
+#endif
+          }
           switch (p->header.typ){
             case DATA:
               // PRINTF("[PHD]: Data\n");

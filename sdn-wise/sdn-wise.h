@@ -32,9 +32,16 @@
 #ifndef SDN_WISE_H_
 #define SDN_WISE_H_
 
+#include "contiki.h"
 #include "lib/list.h"
 #include "lib/memb.h"
 #include "packet-buffer.h"
+
+#define RAND_BETWEEN(MAX, MIN)  (int)((MIN * CLOCK_SECOND) +                  \
+                                ((((MAX - MIN) * CLOCK_SECOND) *              \
+                                (uint32_t)random_rand()) / RANDOM_RAND_MAX))
+
+#define RAND_UP_TO(n)           (int)(((n * CLOCK_SECOND) * (uint32_t)random_rand()) / RANDOM_RAND_MAX)
 
 #define SDN_CODE_STRING(code) \
   ((code == DATA) ? ("DATA") : \

@@ -46,12 +46,16 @@
 #define PRINTF(...)
 #endif
 
-#define MAX_TX_NODES 5
-#define TX_NODES 10,11,17,16,15
-static int data_tx_nodes[MAX_TX_NODES] = {TX_NODES};
+// #define TX_NODES 19,11,30,23,17
+
+#ifdef TX_NODES
+  #define MAX_TX_NODES 5
+  static int data_tx_nodes[MAX_TX_NODES] = {TX_NODES};
+#endif
 
 static uint8_t
 is_a_tx_node() {
+#ifdef TX_NODES
   int i;
   for (i = 0; i < MAX_TX_NODES; i++) {
     if (data_tx_nodes[i] == node_id) {
@@ -59,6 +63,9 @@ is_a_tx_node() {
     }
   }
   return 0;
+#else
+  return 1;
+#endif
 }
 
 /*----------------------------------------------------------------------------*/
