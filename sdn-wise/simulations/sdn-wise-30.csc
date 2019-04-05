@@ -602,6 +602,24 @@
       </interface_config>
       <motetype_identifier>sky2</motetype_identifier>
     </mote>
+    <mote>
+      <breakpoints />
+      <interface_config>
+        org.contikios.cooja.interfaces.Position
+        <x>152.75352248335093</x>
+        <y>-16.822148671226742</y>
+        <z>0.0</z>
+      </interface_config>
+      <interface_config>
+        org.contikios.cooja.mspmote.interfaces.MspClock
+        <deviation>1.0</deviation>
+      </interface_config>
+      <interface_config>
+        org.contikios.cooja.mspmote.interfaces.MspMoteID
+        <id>31</id>
+      </interface_config>
+      <motetype_identifier>sky2</motetype_identifier>
+    </mote>
   </simulation>
   <plugin>
     org.contikios.cooja.plugins.SimControl
@@ -618,7 +636,7 @@
       <skin>org.contikios.cooja.plugins.skins.IDVisualizerSkin</skin>
       <skin>org.contikios.cooja.plugins.skins.UDGMVisualizerSkin</skin>
       <skin>org.contikios.cooja.plugins.skins.MoteTypeVisualizerSkin</skin>
-      <viewport>0.7777883884299832 0.0 0.0 0.7777883884299832 153.3610191586315 250.65131107402942</viewport>
+      <viewport>1.1070630871926048 0.0 0.0 1.1070630871926048 154.3312389094853 270.8959071139085</viewport>
     </plugin_config>
     <width>400</width>
     <z>1</z>
@@ -731,6 +749,7 @@ while (true) {
       <mote>27</mote>
       <mote>28</mote>
       <mote>29</mote>
+      <mote>30</mote>
       <showRadioRXTX />
       <showRadioHW />
       <zoomfactor>100000.0</zoomfactor>
@@ -742,3 +761,4 @@ while (true) {
     <location_y>854</location_y>
   </plugin>
 </simconf>
+

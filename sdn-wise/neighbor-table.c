@@ -158,7 +158,15 @@
       set_payload_at(p,i,n->rssi);
       ++i;
     }
-    purge_neighbor_table();
+    // purge_neighbor_table();
+  }
+
+
+/*----------------------------------------------------------------------------*/
+  uint8_t
+  neighbor_table_length(void)
+  {
+    return list_length(neighbor_table);
   }
 /*----------------------------------------------------------------------------*/
   void

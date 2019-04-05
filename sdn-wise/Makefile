@@ -12,6 +12,17 @@ ifneq ($(COOJA),)
     CFLAGS += -DCOOJA=$(COOJA)
 endif
 
+# MAC settting
+MAC ?= CSMA
+ifeq ($(MAC),CONTIKIMAC)
+    CFLAGS += -DNETSTACK_CONF_RDC=contikimac_driver
+    CFLAGS += -DNETSTACK_CONF_MAC=csma_driver
+endif
+ifeq ($(MAC),CSMA)
+    CFLAGS += -DNETSTACK_CONF_RDC=nullrdc_driver
+    CFLAGS += -DNETSTACK_CONF_MAC=csma_driver
+endif
+
 SINK ?= 0
 ifneq ($(SINK),)
     CFLAGS += -DSINK=$(SINK)
@@ -23,19 +34,19 @@ ifneq ($(SDN_WISE_DEBUG),)
 endif
 
 # SDN Configuration
-BEACON_FREQ ?= 10
+BEACON_FREQ ?= 5
 ifneq ($(BEACON_FREQ),)
     CFLAGS += -DSDN_CONF_BEACON_PERIOD=$(BEACON_FREQ)
 endif
-REPORT_FREQ ?= 60
+REPORT_FREQ ?= 10
 ifneq ($(REPORT_FREQ),)
     CFLAGS += -DSDN_CONF_CONTROLLER_UPDATE_PERIOD=$(REPORT_FREQ)
 endif
-INITIALISATION_PERIOD ?= 10
+# INITIALISATION_PERIOD ?= 10
 ifneq ($(INITIALISATION_PERIOD),)
     CFLAGS += -DINITIALISATION_PERIOD=$(INITIALISATION_PERIOD)
 endif
-RULE_TTL ?= 1
+RULE_TTL ?= 5
 ifneq ($(RULE_TTL),)
     CFLAGS += -DSDN_CONF_FT_LIFETIME=$(RULE_TTL)
 endif

@@ -15,7 +15,7 @@
       <transmitting_range>50.0</transmitting_range>
       <interference_range>0.0</interference_range>
       <success_ratio_tx>1.0</success_ratio_tx>
-      <success_ratio_rx>1.0</success_ratio_rx>
+      <success_ratio_rx>0.9</success_ratio_rx>
     </radiomedium>
     <events>
       <logoutput>40000</logoutput>
@@ -246,7 +246,7 @@
   <plugin>
     org.contikios.cooja.plugins.SimControl
     <width>280</width>
-    <z>1</z>
+    <z>2</z>
     <height>160</height>
     <location_x>400</location_x>
     <location_y>0</location_y>
@@ -261,7 +261,7 @@
       <viewport>1.4565879917271822 0.0 0.0 1.4565879917271822 124.95195401282645 58.8139336846297</viewport>
     </plugin_config>
     <width>400</width>
-    <z>0</z>
+    <z>1</z>
     <height>400</height>
     <location_x>1</location_x>
     <location_y>1</location_y>
@@ -274,7 +274,7 @@
       <coloring />
     </plugin_config>
     <width>891</width>
-    <z>4</z>
+    <z>5</z>
     <height>853</height>
     <location_x>1029</location_x>
     <location_y>0</location_y>
@@ -288,7 +288,7 @@
       <bound>true</bound>
     </plugin_config>
     <width>366</width>
-    <z>6</z>
+    <z>7</z>
     <height>116</height>
     <location_x>682</location_x>
     <location_y>2</location_y>
@@ -301,7 +301,7 @@
       <coloring />
     </plugin_config>
     <width>1027</width>
-    <z>5</z>
+    <z>6</z>
     <height>448</height>
     <location_x>0</location_x>
     <location_y>406</location_y>
@@ -333,7 +333,7 @@ while (true) {
       <active>true</active>
     </plugin_config>
     <width>628</width>
-    <z>3</z>
+    <z>4</z>
     <height>248</height>
     <location_x>402</location_x>
     <location_y>160</location_y>
@@ -356,7 +356,7 @@ while (true) {
       <zoomfactor>100000.0</zoomfactor>
     </plugin_config>
     <width>1920</width>
-    <z>2</z>
+    <z>3</z>
     <height>166</height>
     <location_x>0</location_x>
     <location_y>854</location_y>

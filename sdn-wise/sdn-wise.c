@@ -100,7 +100,9 @@
   PROCESS(rf_b_send_proc, "RF Broadcast Send Process");
   PROCESS(packet_handler_proc, "Packet Handler Process");
   // PROCESS(timer_proc, "Timer Process");
+#if INITIALISATION_PERIOD
   PROCESS(initialisation_timer_proc, "Initialisation Timer Process");
+#endif
   PROCESS(beacon_timer_proc, "Beacon Timer Process");
   PROCESS(report_timer_proc, "Report Timer Process");
   PROCESS(data_timer_proc, "Data Timer Process");
@@ -109,7 +111,9 @@
     &rf_u_send_proc,
     &rf_b_send_proc,
     // &timer_proc,
+#if INITIALISATION_PERIOD
     &initialisation_timer_proc,
+#endif
     &beacon_timer_proc,
     &report_timer_proc,
     &packet_handler_proc,
@@ -264,7 +268,9 @@
           conf.is_active = 1;
           process_post(&beacon_timer_proc, ACTIVATE_EVENT, (process_data_t)NULL);
           process_post(&report_timer_proc, ACTIVATE_EVENT, (process_data_t)NULL);
+#if INITIALISATION_PERIOD
           process_post(&initialisation_timer_proc, ACTIVATE_EVENT, (process_data_t)NULL);
+#endif
         }
         case RF_U_RECEIVE_EVENT:
         process_post(&packet_handler_proc, NEW_PACKET_EVENT, (process_data_t)data);
@@ -438,6 +444,7 @@ PROCESS_THREAD(beacon_timer_proc, ev, data) {
     }
     PROCESS_END();
 }
+
 /*----------------------------------------------------------------------------*/
   PROCESS_THREAD(report_timer_proc, ev, data) {
     static struct etimer et;

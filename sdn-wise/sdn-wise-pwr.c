@@ -39,6 +39,9 @@
 #include "contiki-lib.h"
 #include "node-id.h"
 
+#include "node-conf.h"
+#include "neighbor-table.h"
+
 #include <stdio.h>
 #include <string.h>
 
@@ -82,6 +85,19 @@ sdn_pwr_stop(void)
 {
   LOG_INFO("Ending sdn_pwr_process\n");
   process_exit(&sdn_pwr_process);
+}
+
+/*---------------------------------------------------------------------------*/
+/* hops, num_neighbors */
+void
+sdn_stats_print(char *str)
+{
+  if (str != NULL) {
+    LOG_STAT("o:%s h:%u, n%u\n", str, conf.hops_from_sink, neighbor_table_length());
+  } else {
+    LOG_STAT("h:%u, n:%u\n", conf.hops_from_sink, neighbor_table_length());
+  }
+  // ANNOTATE("#A n:=%u, h=%u\n", neighbor_table_length(), conf.hops_from_sink);
 }
 
 /*---------------------------------------------------------------------------*/
@@ -153,11 +169,18 @@ PROCESS_THREAD(sdn_pwr_process, ev, data)
     LOG_ERR("Exiting SDN power process!\n");
     PROCESS_EXIT();
   }
+
+  // // Wait a little until we start
+  // etimer_set(&periodic, 120 * CLOCK_SECOND);
+  // PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&periodic));
+
+  // Start
   etimer_set(&periodic, *period);
 
   while(1) {
     PROCESS_WAIT_UNTIL(etimer_expired(&periodic));
     etimer_reset(&periodic);
+    sdn_stats_print(NULL);
     sdn_energy_print();
   }
 

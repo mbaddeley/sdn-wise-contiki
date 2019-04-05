@@ -124,6 +124,8 @@ const void* conf_ptr[RULE_TTL+1] =
 static uint8_t just_received_open_path = 0;
 uint16_t last_request_pid[100] = {0}; // FIXME: 100 is a magic number
 static uint8_t last_open_path_match = 0;
+
+static uint8_t nodes_joined[MAX_NODES] = {0};
 #endif /* SINK */
 /*----------------------------------------------------------------------------*/
   void
@@ -243,8 +245,11 @@ static uint8_t last_open_path_match = 0;
   {
 #if SINK
     send_to_uart(p);
+    if(!nodes_joined[p->header.src.u8[1]]) {
+      nodes_joined[p->header.src.u8[1]] = 1;
+      LOG_STAT("n:%u c:1\n", p->header.src.u8[1]);
+    }
 #else
-
     p->header.nxh = conf.nxh_vs_sink;
     rf_unicast_send(p);
 #endif

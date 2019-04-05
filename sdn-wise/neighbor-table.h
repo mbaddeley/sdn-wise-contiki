@@ -48,6 +48,7 @@
   void neighbor_table_init(void);
   void print_neighbor_table(void);
   void test_neighbor_table(void);
+  uint8_t neighbor_table_length(void);
   neighbor_t* neighbor_table_contains(address_t*);
   uint8_t neighbor_cmp(neighbor_t*, neighbor_t*);
 #endif /* NEIGHBOR_TABLE_H_ */

@@ -8,7 +8,7 @@
   <project EXPORT="discard">[APPS_DIR]/powertracker</project>
   <simulation>
     <title>SDN-WISE-5</title>
-    <randomseed>123456</randomseed>
+    <randomseed>123459</randomseed>
     <motedelay_us>1000000</motedelay_us>
     <radiomedium>
       org.contikios.cooja.radiomediums.UDGM
@@ -190,7 +190,7 @@
       <viewport>0.9684077515128322 0.0 0.0 0.9684077515128322 134.70850314062093 105.7534532122652</viewport>
     </plugin_config>
     <width>400</width>
-    <z>0</z>
+    <z>4</z>
     <height>400</height>
     <location_x>1</location_x>
     <location_y>1</location_y>
@@ -198,12 +198,12 @@
   <plugin>
     org.contikios.cooja.plugins.LogListener
     <plugin_config>
-      <filter>ID:1</filter>
+      <filter />
       <formatted_time />
       <coloring />
     </plugin_config>
     <width>891</width>
-    <z>4</z>
+    <z>3</z>
     <height>853</height>
     <location_x>1029</location_x>
     <location_y>0</location_y>
@@ -219,10 +219,10 @@
       <mote>5</mote>
       <showRadioRXTX />
       <showRadioHW />
-      <zoomfactor>50000.0</zoomfactor>
+      <zoomfactor>20000.0</zoomfactor>
     </plugin_config>
     <width>1920</width>
-    <z>6</z>
+    <z>5</z>
     <height>166</height>
     <location_x>0</location_x>
     <location_y>854</location_y>
@@ -236,7 +236,7 @@
       <bound>true</bound>
     </plugin_config>
     <width>366</width>
-    <z>3</z>
+    <z>6</z>
     <height>116</height>
     <location_x>682</location_x>
     <location_y>2</location_y>
@@ -244,12 +244,11 @@
   <plugin>
     org.contikios.cooja.plugins.LogListener
     <plugin_config>
-      <filter>ID:2</filter>
-      <formatted_time />
+      <filter>TX REQ</filter>
       <coloring />
     </plugin_config>
     <width>1124</width>
-    <z>5</z>
+    <z>1</z>
     <height>448</height>
     <location_x>0</location_x>
     <location_y>406</location_y>
@@ -281,7 +280,7 @@ while (true) {
       <active>true</active>
     </plugin_config>
     <width>600</width>
-    <z>1</z>
+    <z>7</z>
     <height>223</height>
     <location_x>402</location_x>
     <location_y>168</location_y>
