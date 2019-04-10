@@ -438,6 +438,7 @@ PROCESS_THREAD(beacon_timer_proc, ev, data) {
         PROCESS_WAIT_EVENT_UNTIL(ev == ACTIVATE_EVENT);
       }
 #endif
+      // etimer_set(&et, (conf.beacon_period) * CLOCK_SECOND);
       etimer_set(&et, (conf.beacon_period + node_id) * CLOCK_SECOND);
       PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
       process_post(&main_proc, RF_SEND_BEACON_EVENT, (process_data_t)NULL);
@@ -460,6 +461,7 @@ PROCESS_THREAD(beacon_timer_proc, ev, data) {
         PROCESS_WAIT_EVENT_UNTIL(ev == ACTIVATE_EVENT);
       }
 #endif
+      // etimer_set(&et, (conf.report_period) * CLOCK_SECOND);
       etimer_set(&et, (conf.report_period + node_id) * CLOCK_SECOND);
       PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
       process_post(&main_proc, RF_SEND_REPORT_EVENT, (process_data_t)NULL);
@@ -478,6 +480,7 @@ PROCESS_THREAD(beacon_timer_proc, ev, data) {
       }
 #endif
       int data_period = RAND_BETWEEN(75, 60);
+      // int data_period = ((60 + node_id) * CLOCK_SECOND);
       etimer_set(&et, data_period);
       PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
       process_post(&main_proc, RF_SEND_DATA_EVENT, (process_data_t)NULL);
